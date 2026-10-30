@@ -52,7 +52,7 @@
 ## ETAPA 3 — Núcleo clínico ✅ (rama `etapa-3-clinica`)
 
 > RF-03, RF-04, RF-05, RN-01. Q-02 (tipo de firma) sigue abierta: se aplicó el supuesto S-03
-> (firma electrónica simple). Q-03 (recetas) sigue abierta: P-01 no se implementó.
+> (firma electrónica simple). Las recetas (P-01) se implementaron en la Etapa 4.
 
 - [x] Migración `003_clinica.sql`: `odontograma_eventos`, `periodontogramas` + `perio_dientes` + `perio_sitios` (NIC generado), `notas_soep` + `notas_adendas`, `procedimientos_realizados` + `procedimientos_adendas`
 - [x] Triggers: nota no editable si está firmada o vencida; procedimiento realizado sin `UPDATE` ni `DELETE` (RN-01); todo lo demás sólo inserción
@@ -62,19 +62,22 @@
 - [x] Notas SOEP: borrador → firma electrónica simple (código MFA + hash SHA-256 + registro profesional); adendas firmadas; verificación del hash
 - [x] Procedimientos realizados firmados e inmutables con adendas
 - [x] Auditoría de cada lectura y escritura clínica; firmas fallidas auditadas
-- [ ] Almacenamiento de archivos (radiografías, documentos): se pasa a la Etapa 4 junto con los consentimientos
+- [x] Almacenamiento de archivos (radiografías, documentos): hecho en la Etapa 4
 - [x] **Verificación:** edición rechazada a las 24 h por API **y** BD; borrado de procedimiento realizado imposible; tabla FDI↔Universal completa en pruebas; casos numéricos de NIC; recorrido en el navegador
 
-## ETAPA 4 — Planes y consentimientos (rama `etapa-4-presupuestos`)
+## ETAPA 4 — Planes y consentimientos ✅ (rama `etapa-4-planes`)
 
-> RF-06, RF-07, RF-08. Requiere respuesta a Q-06 (tope de descuento).
+> RF-06, RF-07, RF-08, P-01 (recetas) y archivos. Q-06 sin respuesta: se aplicó S-25 (tope
+> configurable del 10 % y autorización por otro odontólogo).
 
-- [ ] Presupuestos por fases y sesiones con honorarios, laboratorio y descuento (`NUMERIC`)
-- [ ] Descuento sobre el tope del rol ⇒ requiere autorización
-- [ ] Aprobación total o parcial ⇒ tareas agendables sólo de los ítems aprobados
-- [ ] Consentimientos por procedimiento: plantilla, documento con hash, firma manuscrita digitalizada (no biométrica) u OTP (proveedor simulado); inmutable tras firmar
-- [ ] Almacenamiento de archivos (interfaz; disco local en desarrollo) para consentimientos firmados y adjuntos clínicos
-- [ ] **Verificación:** aprobar 2 de 3 ítems crea exactamente 2 tareas; documento firmado no se modifica
+- [x] Migración `004_planes.sql`: `presupuestos` + `presupuesto_items` (`NUMERIC`, descuento ≤ honorario), `tareas_tratamiento`, `citas.tarea_id` y `procedimientos_realizados.tarea_id` (índices únicos), `consentimiento_plantillas` (versionadas), `consentimientos`, `recetas` + `receta_items`, `archivos_paciente`
+- [x] Triggers: borrador editable; presentado ⇒ sólo la decisión; decidido ⇒ nada; consentimiento firmado inmutable; plantillas, tareas, recetas y archivos sólo inserción
+- [x] Presupuestos por fases y sesiones, totales en centavos (Go y JS), descuento sobre el tope ⇒ autorización de otro odontólogo con MFA, presentación con hash
+- [x] Aprobación total o parcial ⇒ una tarea por ítem aprobado; cita y procedimiento realizado desde la tarea (estado derivado)
+- [x] Consentimientos: vista previa del texto exacto, firma en pantalla (PNG) u OTP (proveedor SIMULADO, 10 min, 5 intentos), tutor para menores, impresión
+- [x] Recetas con alertas de alergia (reactividad cruzada) y anticoagulación, confirmación y firma MFA, impresión
+- [x] Archivos: interfaz `Almacen` (disco local; memoria en pruebas), tipo por contenido, SHA-256 verificado al descargar
+- [x] **Verificación:** aprobar 2 de 3 ítems crea exactamente 2 tareas; ni la API ni la BD modifican un presupuesto presentado ni un consentimiento firmado; archivo alterado ⇒ 409; recorrido de 12 pasos en el navegador
 
 ## ETAPA 5 — Caja y facturación (rama `etapa-5-caja`)
 

@@ -72,7 +72,21 @@ Guardia de las notas en la BD (`sigo_nota_soep_guardia`):
 
 Así, aunque alguien escriba SQL directo, no puede editar una nota fuera de plazo. Y si un administrador de base de datos desactiva el trigger y altera una nota firmada, el hash ya no coincide y la interfaz la marca como **posible alteración** (probado en `TestNotasSOEPFirmaYAdendas`).
 
-## 3.4 Modelo completo planificado (Etapas 4–6)
+## 3.4 Etapa 4 — `004_planes.sql`
+
+| Tabla | Propósito | Puntos clave |
+|---|---|---|
+| `presupuestos` | RF-07 | `estado` BORRADOR → PRESENTADO → APROBADO / APROBADO_PARCIAL / RECHAZADO; `hash_presentado` (SHA-256 de ítems y montos); quién y cuándo registró la decisión. |
+| `presupuesto_items` | Fases y sesiones | `fase` 1–20, `sesion` 1–50, diente FDI y superficies opcionales; `honorario`, `costo_laboratorio`, `descuento` en `NUMERIC(12,2)` con `descuento ≤ honorario`; `descuento_autorizado_por/en` (S-25); `decision` por ítem. |
+| `tareas_tratamiento` | RF-08 | Una por ítem aprobado (`presupuesto_item_id UNIQUE`). Sólo inserción: el estado se **deriva** de `citas.tarea_id` (índice único parcial sobre citas activas) y `procedimientos_realizados.tarea_id` (índice único). |
+| `consentimiento_plantillas` | Plantillas | `(codigo, version) UNIQUE`; sólo inserción (una edición es una versión nueva). |
+| `consentimientos` | RF-06 | Texto final y `hash_documento`; firmante (PACIENTE/TUTOR); `metodo` MANUSCRITA (`firma_imagen` PNG + SHA-256) u OTP (`otp_hash`, vencimiento, intentos, canal, destinatario enmascarado, proveedor y `otp_simulado`); `hash_firma`. `CHECK` de coherencia entre método, estado y datos de firma. |
+| `recetas`, `receta_items` | P-01 | Alertas confirmadas (`jsonb`), `hash_firma`; sólo inserción. |
+| `archivos_paciente` | Adjuntos | Tipo `image/jpeg`, `image/png`, `application/pdf`; `tamano ≤ 10 MB`; `sha256`; `clave` única en el almacén; sólo inserción. |
+
+Guardias en la BD: presupuesto en borrador editable; **presentado ⇒ sólo se registra la decisión** (ni título, ni ítems, ni montos); decidido ⇒ nada; nunca se borra. Consentimiento: nunca se borra, el texto y su hash nunca cambian y, firmado, nada cambia.
+
+## 3.5 Modelo completo planificado (Etapas 5–6)
 
 ```mermaid
 erDiagram
@@ -93,6 +107,11 @@ erDiagram
   PERIODONTOGRAMA ||--o{ PERIO_SITIO : "6 sitios x diente"
   PACIENTE ||--o{ PROCEDIMIENTO_REALIZADO : "E3 (RN-01)"
   PACIENTE ||--o{ CONSENTIMIENTO : "E4"
+  CONSENTIMIENTO_PLANTILLA ||--o{ CONSENTIMIENTO : "versión firmada"
+  PACIENTE ||--o{ RECETA : "E4 (P-01)"
+  PACIENTE ||--o{ ARCHIVO : "E4"
+  TAREA_AGENDABLE ||--o| CITA : "cita activa"
+  TAREA_AGENDABLE ||--o| PROCEDIMIENTO_REALIZADO : "realizada"
   PACIENTE ||--o{ PRESUPUESTO : "E4"
   PRESUPUESTO ||--o{ PRESUPUESTO_ITEM : "fases y sesiones"
   PRESUPUESTO_ITEM ||--o| TAREA_AGENDABLE : "si se aprueba (RF-08)"
@@ -110,7 +129,7 @@ Reglas previstas en la BD:
 - **RN-02 (Etapa 5):** la respuesta del cierre al recepcionista nunca incluye el total teórico; sólo `caja.revisar` (Auditor) lo ve.
 - **RF-14 (Etapa 6):** el descargo de insumos ocurre en la **misma transacción** que marcar el procedimiento como realizado.
 
-## 3.5 Convenciones clínicas
+## 3.6 Convenciones clínicas
 
 ### Numeración dental
 

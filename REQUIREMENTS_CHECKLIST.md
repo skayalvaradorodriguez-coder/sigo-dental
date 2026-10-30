@@ -11,12 +11,12 @@
 
 | Campo | Valor |
 |---|---|
-| **Etapa actual** | Etapa 3 completada · siguiente: Etapa 4 (planes y consentimientos) |
-| **Última tarea completada** | Etapa 3: odontograma FDI/Universal, periodontograma con NIC, notas SOEP con bloqueo y firma, adendas, procedimientos realizados inmutables (2026-10-30) |
-| **Siguiente tarea pendiente** | E4-01: presupuestos por fases y sesiones (RF-07) |
-| **Pruebas** | Go: 22 unitarias + 49 de integración ✅ · Frontend: 17 (Vitest) ✅ · Humo PowerShell ✅ · Navegador: 21 pasos (Etapas 1–2) + 10 (Etapa 3) ✅ |
-| **Cobertura backend** | Capa de endpoints 81,0 % ✅ (meta SRS 8.2: ≥ 80 %) · total del backend 79,9 % |
-| **Bloqueadores** | Ninguno para la Etapa 4. Preguntas abiertas al cliente: Q-01…Q-06 (`docs/01-analisis-requisitos.md` §1.4); Q-06 (tope de descuentos) se necesita en la Etapa 4 |
+| **Etapa actual** | Etapa 4 completada · siguiente: Etapa 5 (caja y facturación) |
+| **Última tarea completada** | Etapa 4: presupuestos por fases con descuentos autorizados, aprobación parcial → tareas agendables, consentimientos (firma en pantalla u OTP), recetas con alertas y archivos con SHA-256 (2026-10-30) |
+| **Siguiente tarea pendiente** | E5-01: sesión de caja y cobros con pagos mixtos (RF-12) |
+| **Pruebas** | Go: 25 unitarias + 56 de integración ✅ · Frontend: 23 (Vitest) ✅ · Humo PowerShell ✅ · Navegador: 21 (Etapas 1–2) + 10 (Etapa 3) + 12 (Etapa 4) pasos ✅ |
+| **Cobertura backend** | Capa de endpoints 81,1 % ✅ (meta SRS 8.2: ≥ 80 %) · total del backend 80,3 % |
+| **Bloqueadores** | Ninguno para la Etapa 5 (se usará un proveedor de facturación SIMULADO). Preguntas abiertas al cliente: Q-01…Q-06 (`docs/01-analisis-requisitos.md` §1.4); Q-01 (país) y Q-04 (cierre ciego) afectan la Etapa 5 |
 
 ## Stack (igual a catalogo-multinivel)
 
@@ -50,11 +50,13 @@
   - [x] Cada cambio es un evento: el historial no se pierde (sólo inserción en la BD)
 - [x] **RF-04** Periodontograma: sondaje en 6 puntos, margen gingival, NIC calculado por la BD, furca, movilidad, sangrado, resumen
 - [x] **RF-05** Notas SOEP: bitácora cronológica, bloqueo tras el plazo configurable (24 h) en API y BD, firma del profesional (firma electrónica simple con MFA + hash), adendas
-- [ ] **RF-06** Consentimiento informado por procedimiento: firma manuscrita digitalizada u OTP (proveedor simulado)
+- [x] **RF-06** Consentimiento informado por procedimiento: plantillas versionadas, vista previa del texto exacto, firma en pantalla (imagen del trazo, **no** biométrica) u OTP (proveedor **SIMULADO**), tutor para menores, inmutable con SHA-256
+- [x] **P-01** Recetas con revisión de alergias/anticoagulación, confirmación explícita y firma con MFA (Q-03 abierta: validez legal según el país)
+- [x] Archivos del paciente (radiografías, fotos, PDF): tipo por contenido, ≤ 10 MB, SHA-256 verificado al descargar
 
 ### Presupuestos (Etapa 4)
-- [ ] **RF-07** Presupuestos por fases/sesiones: honorarios, laboratorio, descuentos autorizados
-- [ ] **RF-08** Aprobación total o parcial → tareas agendables
+- [x] **RF-07** Presupuestos por fases/sesiones: honorarios, laboratorio, descuentos; sobre el tope (configurable, 10 %) los autoriza otro odontólogo con MFA
+- [x] **RF-08** Aprobación total o parcial por ítem → una tarea por ítem aprobado; agendar y registrar como realizado desde la tarea
 
 ### Agenda
 - [x] **RF-09** Calendario día/semana por sillón y profesional, multisede (sede → consultorio → sillón)
@@ -87,13 +89,14 @@
 - [x] **RNF-06** Auditoría inmutable: quién, qué, cuándo (ISO-8601), IP; cadena de hashes verificable
   - [x] Autenticación, administración, pacientes (lecturas y cambios), anamnesis, citas
   - [x] Odontograma, periodontograma, notas, adendas y procedimientos (lecturas y escrituras); firmas fallidas
-  - [ ] Presupuestos, consentimientos, caja, inventario y honorarios (Etapas 4–6)
+  - [x] Presupuestos, autorizaciones de descuento, decisiones, consentimientos, recetas y archivos (lecturas y escrituras); archivo alterado
+  - [ ] Caja, inventario y honorarios (Etapas 5–6)
 - [x] **RNF-07** Responsive: escritorio y celular verificados · [ ] tablet 10,5" y 1920×1080 automatizados (Etapa 7)
 - [ ] **RNF-08** Navegadores: hoy probado en Chromium; Firefox, WebKit/Safari y Edge en la Etapa 7
 
 ## Criterios técnicos (SRS §8.2)
 - [x] OpenAPI 3 generado del código (`go run . openapi`)
-- [x] Cobertura ≥ 80 % en la capa de endpoints — medida 81,0 % (total 79,9 %)
+- [x] Cobertura ≥ 80 % en la capa de endpoints — medida 81,1 % (total 80,3 %)
 - [ ] ⏳ DAST/SAST sin hallazgos Altos/Críticos (ZAP, gosec, govulncheck, npm audit) — Etapa 7
 
 ## Etapas
@@ -101,7 +104,7 @@
 - [x] **Etapa 1 — Base** (configuración, BD, autenticación, roles, navegación)
 - [x] **Etapa 2 — Pacientes y agenda**
 - [x] **Etapa 3 — Núcleo clínico** (RF-03, RF-04, RF-05, RN-01)
-- [ ] **Etapa 4 — Planes y consentimientos** (RF-06, RF-07, RF-08)
+- [x] **Etapa 4 — Planes y consentimientos** (RF-06, RF-07, RF-08, recetas, archivos)
 - [ ] **Etapa 5 — Caja y facturación** (RF-12, RN-02)
 - [ ] **Etapa 6 — Inventario y honorarios** (RF-13, RF-14)
 - [ ] **Etapa 7 — Calidad y salida** (RNF-01…04, RNF-08, 8.2, despliegue Render + Neon)

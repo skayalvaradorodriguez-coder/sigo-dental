@@ -43,4 +43,6 @@ Decisiones de menor privilegio (ver 01-analisis, supuestos):
 
 Uso en el expediente clínico (Etapa 3): leer odontograma, periodontograma, notas y procedimientos ⇒ `clinica.leer`; registrar hallazgos, periodontogramas y borradores de nota ⇒ `clinica.escribir`; firmar notas, agregar adendas y registrar procedimientos realizados ⇒ `clinica.firmar` (además del código MFA en el momento de firmar).
 
+Uso en la Etapa 4: elaborar y presentar presupuestos ⇒ `presupuestos.escribir`; autorizar un descuento sobre el tope ⇒ `presupuestos.escribir` + `clinica.firmar` y **no** ser quien elaboró el presupuesto (código MFA); registrar la decisión del paciente ⇒ `presupuestos.aprobar` (recepción u odontólogo); ver tareas ⇒ `citas.leer` o `presupuestos.leer`. Consentimientos: generar y firmar ⇒ `consentimientos.gestionar`; consultar los del paciente ⇒ también `clinica.leer` (asistente); plantillas ⇒ `catalogos.gestionar` (admin). Recetas ⇒ `recetas.escribir`; archivos: subir ⇒ `clinica.escribir`, ver ⇒ `clinica.leer`.
+
 Verificación: `pruebas/permisos_test.go` prueba la matriz rol × endpoint contra la API real (403 donde no corresponde) y `permisos/permisos_test.go` comprueba que cada permiso pertenece al catálogo.
