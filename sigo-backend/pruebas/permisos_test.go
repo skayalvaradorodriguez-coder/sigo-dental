@@ -31,6 +31,16 @@ func TestMatrizDePermisos(t *testing.T) {
 		{"GET", "/api/pacientes/" + ana + "/odontograma", []string{permisos.ClinicaLeer}},
 		{"GET", "/api/pacientes/" + ana + "/notas", []string{permisos.ClinicaLeer}},
 		{"GET", "/api/pacientes/" + ana + "/procedimientos", []string{permisos.ClinicaLeer}},
+		{"GET", "/api/presupuestos", []string{permisos.PresupuestosLeer}},
+		{"GET", "/api/pacientes/" + ana + "/tareas", []string{permisos.CitasLeer, permisos.PresupuestosLeer}},
+		{"GET", "/api/consentimientos", []string{permisos.ConsentimientosGestionar}},
+		{"GET", "/api/consentimientos/plantillas", []string{permisos.ConsentimientosGestionar, permisos.CatalogosGestionar}},
+		{"GET", "/api/pacientes/" + ana + "/recetas", []string{permisos.ClinicaLeer}},
+		{"GET", "/api/caja/sesion", []string{permisos.CajaOperar}},
+		{"GET", "/api/pacientes/" + ana + "/por-cobrar", []string{permisos.CajaOperar}},
+		{"GET", "/api/pacientes/" + ana + "/cobros", []string{permisos.CajaOperar, permisos.CajaRevisar}},
+		{"GET", "/api/caja/cierres", []string{permisos.CajaRevisar}},
+		{"GET", "/api/caja/cuentas-por-cobrar", []string{permisos.CajaRevisar}},
 	}
 	usuarios := map[string]string{permisos.AdminTI: admin, permisos.Recepcionista: recepcion, permisos.Odontologo: odontologo,
 		permisos.Asistente: asistente, permisos.Auditor: auditor}

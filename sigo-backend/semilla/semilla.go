@@ -8,6 +8,8 @@
 //   - Planes (Etapa 4): plantillas de consentimiento (si no hay ninguna) y un presupuesto en
 //     borrador para Ana Torres (si no hay presupuestos). Textos de EJEMPLO, sin validez legal:
 //     cada clínica debe usar los que apruebe su asesoría jurídica.
+//   - Caja (Etapa 5): una caja de ayer, ya cerrada, con un faltante de 1.00 en efectivo para que
+//     el Auditor la concilie (sólo si aún no hay cajas). Comprobantes del proveedor SIMULADO.
 package semilla
 
 import (
@@ -18,6 +20,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"sigo-backend/domain"
+	"sigo-backend/facturacion"
 	"sigo-backend/notificaciones"
 	"sigo-backend/seguridad"
 )
@@ -77,7 +80,10 @@ func Cargar(ctx context.Context, pool *pgxpool.Pool, resetUsuarios bool, zona *t
 	if err := cargarExpediente(ctx, pool); err != nil {
 		return err
 	}
-	return cargarPlanes(ctx, pool)
+	if err := cargarPlanes(ctx, pool); err != nil {
+		return err
+	}
+	return cargarCaja(ctx, pool)
 }
 
 func idUsuario(ctx context.Context, pool *pgxpool.Pool, email string) (id string) {
@@ -424,3 +430,81 @@ func cargarPlanes(ctx context.Context, pool *pgxpool.Pool) error {
 }
 
 func ptr[T any](v T) *T { return &v }
+
+// cargarCaja (Etapa 5): caja de ayer de recepción, cerrada a ciegas con un faltante de 1.00.
+func cargarCaja(ctx context.Context, pool *pgxpool.Pool) error {
+	var n int
+	if err := pool.QueryRow(ctx, `SELECT count(*) FROM caja_sesiones`).Scan(&n); err != nil || n > 0 {
+		return err
+	}
+	recep := idUsuario(ctx, pool, "recepcion@demo.sigo")
+	if recep == "" {
+		return nil
+	}
+	var daniela, carlos string
+	if pool.QueryRow(ctx, `SELECT id FROM pacientes WHERE numero_documento='DEMO000107'`).Scan(&daniela) != nil ||
+		pool.QueryRow(ctx, `SELECT id FROM pacientes WHERE numero_documento='DEMO000102'`).Scan(&carlos) != nil {
+		return nil
+	}
+	tx, err := pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	var sesion string
+	if err := tx.QueryRow(ctx, `INSERT INTO caja_sesiones (cajero_id, fondo_inicial, abierta_en) VALUES ($1, 50.00, now() - interval '1 day 2 hours') RETURNING id`, recep).Scan(&sesion); err != nil {
+		return err
+	}
+	type pago struct{ medio, monto, ref string }
+	cobros := []struct {
+		paciente, codigo string
+		pagos            []pago
+	}{
+		{daniela, "VAL-01", []pago{{"EFECTIVO", "25.00", ""}}},
+		{carlos, "PRO-01", []pago{{"EFECTIVO", "20.00", ""}, {"TARJETA", "15.00", "VOUCHER-DEMO-0001"}}},
+	}
+	prov := &facturacion.Simulado{}
+	for i, cb := range cobros {
+		var procID, nombre, arancel string
+		if err := tx.QueryRow(ctx, `SELECT id, nombre, arancel::text FROM procedimientos WHERE codigo=$1`, cb.codigo).Scan(&procID, &nombre, &arancel); err != nil {
+			return err
+		}
+		var id string
+		var numero int64
+		if err := tx.QueryRow(ctx, `INSERT INTO cobros (sesion_id, paciente_id, total, registrado_por, registrado_en) VALUES ($1,$2,$3,$4, now() - interval '1 day' + $5 * interval '30 minutes') RETURNING id, numero`,
+			sesion, cb.paciente, arancel, recep, i).Scan(&id, &numero); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(ctx, `INSERT INTO cobro_conceptos (cobro_id, procedimiento_id, descripcion, monto) VALUES ($1,$2,$3,$4)`, id, procID, cb.codigo+" · "+nombre, arancel); err != nil {
+			return err
+		}
+		for _, p := range cb.pagos {
+			var ref *string
+			if p.ref != "" {
+				ref = &p.ref
+			}
+			if _, err := tx.Exec(ctx, `INSERT INTO cobro_pagos (cobro_id, medio, monto, referencia) VALUES ($1,$2,$3,$4)`, id, p.medio, p.monto, ref); err != nil {
+				return err
+			}
+		}
+		var sec int64
+		if err := tx.QueryRow(ctx, `SELECT nextval('comprobantes_factura')`).Scan(&sec); err != nil {
+			return err
+		}
+		doc := facturacion.Documento{Tipo: "FACTURA", Secuencial: sec, Emisor: "Clínica Dental Demo", Receptor: facturacion.Receptor{Documento: "Datos ficticios", Nombre: "Paciente de demostración"},
+			Lineas: []facturacion.Linea{{Descripcion: cb.codigo + " · " + nombre, Monto: arancel}}, Total: arancel, Fecha: time.Now().UTC().Format(time.RFC3339), ReciboInterno: numero}
+		res, _ := prov.Emitir(ctx, doc)
+		raw, _ := json.Marshal(doc)
+		if _, err := tx.Exec(ctx, `INSERT INTO comprobantes (cobro_id, tipo, estado, secuencial, numero, autorizacion, proveedor, simulado, mensaje, documento, hash_documento, emitido_por)
+			VALUES ($1,'FACTURA',$2,$3,$4,$5,'simulado',true,$6,$7,$8,$9)`, id, res.Estado, sec, res.Numero, res.Autorizacion, res.Mensaje, raw, seguridad.SHA256Hex(string(raw)), recep); err != nil {
+			return err
+		}
+	}
+	// Cierre ciego: declara 94.00 en efectivo (el teórico es 50 + 25 + 20 = 95.00).
+	if _, err := tx.Exec(ctx, `UPDATE caja_sesiones SET estado='CERRADA', cerrada_en=now() - interval '20 hours',
+		declarado_efectivo=94.00, declarado_tarjeta=15.00, declarado_transferencia=0, teorico_efectivo=95.00, teorico_tarjeta=15.00, teorico_transferencia=0
+		WHERE id=$1`, sesion); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
+}

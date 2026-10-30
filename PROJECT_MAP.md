@@ -45,6 +45,7 @@ Config: `.env` opcional (ver `.env.example`): `VITE_API_URL` vacía = mismo orig
 | `services/pacientesService.js` | Búsqueda, ficha, alta, edición, anamnesis. |
 | `services/citasService.js` | Citas, reprogramar, estado, bandeja de mensajes. |
 | `services/expedienteService.js` | Odontograma, periodontogramas, notas SOEP (firma, adendas), procedimientos realizados. |
+| `services/cajaService.js` | Caja (sesión, cobros, anulación, comprobante, cierre ciego) y vistas del Auditor. |
 | `services/planesService.js` | Presupuestos, tareas, consentimientos (vista previa, firma, OTP), plantillas, recetas, archivos (multipart y descarga como blob). |
 | `context/AuthContext.jsx` (+ `AuthContextValue.js`, `useAuth.jsx`) | Perfil, permisos, `puede(...)`, `ingresar`, `aplicarSesion` (tokens rotados por MFA), `salir`. |
 | `hooks/useApi.js` | Lectura `{data, isLoading, error, recargar}` (igual al del catálogo). |
@@ -79,6 +80,10 @@ Config: `.env` opcional (ver `.env.example`): `VITE_API_URL` vacía = mismo orig
 | `pages/presupuestos/PresupuestosPaciente.jsx`, `EditorPresupuesto.jsx`, `DetallePresupuesto.jsx` | RF-07/RF-08: editor por fases, autorización de descuentos, presentación, decisión por ítem, tareas. |
 | `pages/consentimientos/Consentimientos.jsx` | Módulo: firmados, esperan código, plantillas versionadas. |
 | `pages/consentimientos/ConsentimientosPaciente.jsx`, `LienzoFirma.jsx` | RF-06: vista previa, firma en pantalla (Pointer Events → PNG) u OTP, detalle e impresión. |
+| `pages/caja/Caja.jsx` | Módulo: recepción (caja) o Auditor (cierres) según permisos; aviso de facturación SIMULADA. |
+| `pages/caja/CajaRecepcion.jsx`, `FormularioCobro.jsx`, `ListaCobros.jsx` | RF-12/RN-02: apertura, cobro con pago mixto y cambio, comprobantes, anulación, cierre ciego. |
+| `pages/caja/Cierres.jsx`, `PagosPaciente.jsx` | Conciliación del Auditor, cuentas por cobrar a aseguradoras, pagos en la ficha. |
+| `components/SelectorPaciente.jsx` | Buscador de pacientes con alertas (agenda y caja). |
 | `pages/ModuloPendiente.jsx` | Pantalla honesta de módulos de etapas futuras. |
 | `pruebas/` | Vitest + Testing Library. |
 
@@ -103,10 +108,12 @@ Config: `.env` (copiar de `.env.example`); pruebas: `.env.test` (base `sigo_dent
 | `controllers/citaController.go` | Citas, estados, reprogramación, bandeja, despacho. |
 | `controllers/presupuestoController.go` | RF-07/RF-08: presupuestos, totales, descuentos con cuatro ojos, presentación con hash, decisión, tareas. |
 | `controllers/documentosController.go` | RF-06 consentimientos (vista previa, manuscrita, OTP), plantillas, recetas con alertas, archivos con SHA-256. |
+| `controllers/cajaController.go` | RF-12/RN-02: caja, cobros, comprobantes, anulación, cierre ciego, conciliación y cuentas por cobrar. |
 | `controllers/clinicaController.go` | Expediente: odontograma, periodontograma, notas SOEP (bloqueo, firma, adendas), procedimientos realizados; re-autenticación MFA y hashes. |
-| `repository/` | `DBRepository` (interfaz) + `Postgres`: usuarios/sesiones, auditoría encadenada, ajustes, catálogos, pacientes, citas, notificaciones, expediente clínico (`clinica.go`), presupuestos y tareas (`presupuestos.go`), consentimientos, recetas y archivos (`documentos.go`). |
+| `repository/` | `DBRepository` (interfaz) + `Postgres`: usuarios/sesiones, auditoría encadenada, ajustes, catálogos, pacientes, citas, notificaciones, expediente clínico (`clinica.go`), presupuestos y tareas (`presupuestos.go`), consentimientos, recetas y archivos (`documentos.go`), caja y cobros (`caja.go`). |
 | `cache/cache.go` | `CacheRepository` + `RedisCache` (nil-safe). |
-| `domain/` | Reglas puras: alertas, estados de cita, edad y día local, numeración dental, superficies, hallazgos, estado del odontograma, NIC, dinero en centavos y totales, alertas de receta. |
+| `domain/` | Reglas puras: alertas, estados de cita, edad y día local, numeración dental, superficies, hallazgos, estado del odontograma, NIC, dinero en centavos y totales, alertas de receta, pago mixto y conciliación del cierre. |
+| `facturacion/` | Puerto `Proveedor` hacia la autoridad tributaria y proveedor `Simulado` (números SIM-…). |
 | `almacenamiento/` | Interfaz `Almacen`: `Local` (disco, `ARCHIVOS_DIR`, nunca sobrescribe) y `Memoria` (pruebas). |
 | `notificaciones/` | Planificador, mensajería (`Simulada`) y despachador. |
 | `seguridad/` | bcrypt, JWT, TOTP (RFC 6238), tokens. |
@@ -137,4 +144,8 @@ Config: `.env` (copiar de `.env.example`); pruebas: `.env.test` (base `sigo_dent
 | Consentimientos | `GET/POST /consentimientos/plantillas`, `GET /consentimientos`, `GET /consentimientos/:id`, `POST /consentimientos/:id/verificar-otp`, `GET/POST /pacientes/:id/consentimientos`, `POST /pacientes/:id/consentimientos/vista-previa` | `consentimientos.gestionar` (lista del paciente también `clinica.leer`; plantillas: `catalogos.gestionar`) |
 | Recetas y archivos | `GET/POST /pacientes/:id/recetas`, `GET/POST /pacientes/:id/archivos`, `GET /archivos/:id/contenido` | leer: `clinica.leer` · recetar: `recetas.escribir` · subir: `clinica.escribir` |
 
-Detalle de cada una (cuerpos y respuestas): `docs/openapi.json` (74 rutas).
+| Caja (recepción) | `GET/POST /caja/sesion`, `POST /caja/sesion/cerrar`, `GET /caja/cobros`, `GET /pacientes/:id/por-cobrar`, `POST /cobros`, `POST /cobros/:id/anular`, `POST /cobros/:id/comprobante` | `caja.operar` (+ `facturacion.emitir` para cobrar, anular y reintentar) |
+| Caja (Auditor) | `GET /caja/cierres`, `GET /caja/cierres/:id`, `POST /caja/cierres/:id/revisar`, `GET /caja/cuentas-por-cobrar` | `caja.revisar` |
+| Caja (ambos) | `GET /cobros/:id`, `GET /pacientes/:id/cobros`, `GET /facturacion/proveedor` | `caja.operar` o `caja.revisar` |
+
+Detalle de cada una (cuerpos y respuestas): `docs/openapi.json` (89 rutas).

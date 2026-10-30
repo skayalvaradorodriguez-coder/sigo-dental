@@ -30,6 +30,12 @@ export const ETIQUETA_ACCION = {
   PRESENTACION: "Presupuesto presentado",
   DECISION: "Decisión del paciente",
   ARCHIVO_ALTERADO: "Archivo alterado",
+  CAJA_APERTURA: "Apertura de caja",
+  CAJA_CIERRE: "Cierre de caja",
+  CAJA_REVISION: "Revisión de cierre",
+  COBRO: "Cobro",
+  ANULACION: "Anulación de cobro",
+  COMPROBANTE: "Comprobante",
 };
 
 export const ESTADOS_CITA = [
@@ -125,3 +131,14 @@ export const ETIQUETA_CATEGORIA_ARCHIVO = {
   DOCUMENTO: "Documento",
   OTRO: "Otro",
 };
+
+// Etapa 5
+export const MEDIOS_PAGO = ["EFECTIVO", "TARJETA", "TRANSFERENCIA", "SEGURO"];
+export const ETIQUETA_MEDIO = {
+  EFECTIVO: "Efectivo",
+  TARJETA: "Tarjeta",
+  TRANSFERENCIA: "Transferencia",
+  SEGURO: "Seguro / convenio",
+};
+export const ETIQUETA_CIERRE = { ABIERTA: "Abierta", CERRADA: "Por revisar", REVISADA: "Revisada" };
+export const ETIQUETA_COMPROBANTE = { FACTURA: "Factura", NOTA_CREDITO: "Nota de crédito" };

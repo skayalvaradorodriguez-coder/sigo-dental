@@ -45,4 +45,6 @@ Uso en el expediente clínico (Etapa 3): leer odontograma, periodontograma, nota
 
 Uso en la Etapa 4: elaborar y presentar presupuestos ⇒ `presupuestos.escribir`; autorizar un descuento sobre el tope ⇒ `presupuestos.escribir` + `clinica.firmar` y **no** ser quien elaboró el presupuesto (código MFA); registrar la decisión del paciente ⇒ `presupuestos.aprobar` (recepción u odontólogo); ver tareas ⇒ `citas.leer` o `presupuestos.leer`. Consentimientos: generar y firmar ⇒ `consentimientos.gestionar`; consultar los del paciente ⇒ también `clinica.leer` (asistente); plantillas ⇒ `catalogos.gestionar` (admin). Recetas ⇒ `recetas.escribir`; archivos: subir ⇒ `clinica.escribir`, ver ⇒ `clinica.leer`.
 
+Uso en la Etapa 5: abrir y cerrar la caja propia, ver sus cobros y los pendientes de un paciente ⇒ `caja.operar`; cobrar y anular ⇒ `caja.operar` + `facturacion.emitir`; reintentar un comprobante ⇒ `facturacion.emitir`; conciliar cierres, revisarlos y ver cuentas por cobrar ⇒ `caja.revisar` (Auditor). Ninguna respuesta de las rutas con `caja.operar` incluye el teórico (RN-02).
+
 Verificación: `pruebas/permisos_test.go` prueba la matriz rol × endpoint contra la API real (403 donde no corresponde) y `permisos/permisos_test.go` comprueba que cada permiso pertenece al catálogo.

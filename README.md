@@ -1,6 +1,6 @@
 # SIGO-Dental — Sistema Integral de Gestión Odontológica
 
-Gestión de una clínica dental: ficha única del paciente con anamnesis y alertas médicas, agenda por sillón y profesional con recordatorios, expediente clínico, presupuestos, consentimientos, recetas y archivos; en etapas siguientes, caja, inventario y honorarios. Construido a partir del SRS v1.0 (29/10/2026).
+Gestión de una clínica dental: ficha única del paciente con anamnesis y alertas médicas, agenda por sillón y profesional con recordatorios, expediente clínico, presupuestos, consentimientos, recetas, archivos y caja con facturación; en etapas siguientes, inventario y honorarios. Construido a partir del SRS v1.0 (29/10/2026).
 
 Mismo stack y forma de trabajo que **catalogo-multinivel**: frontend en React + Vite + Tailwind (**JavaScript**, PWA) en la raíz, backend en **Go + Fiber** en `sigo-backend/`, PostgreSQL 16, Redis, JWT con bcrypt.
 
@@ -14,7 +14,8 @@ Mismo stack y forma de trabajo que **catalogo-multinivel**: frontend en React + 
 | 2. Pacientes y agenda | Catálogos, ficha única con tutor, anamnesis versionada, alertas críticas, agenda día/semana por sillón, 7 estados, recordatorios 48 h/24 h (simulados), sin superposición por sillón | ✅ |
 | 3. Núcleo clínico | Odontograma FDI/Universal por superficies, periodontograma con NIC, notas SOEP con bloqueo a las 24 h y firma (código MFA + hash), adendas, procedimientos realizados que no se borran | ✅ |
 | 4. Planes y consentimientos | Presupuestos por fases con descuentos autorizados por otro odontólogo, aprobación total o parcial → tareas agendables, consentimientos firmados en pantalla u OTP (simulado), recetas con alertas de alergia, archivos con verificación SHA-256 | ✅ |
-| 5–7 | Caja, inventario y honorarios, calidad y despliegue | Ver `PLAN_IMPLEMENTACION.md` |
+| 5. Caja y facturación | Cobros con pago mixto (efectivo, tarjeta, transferencia, seguro), comprobantes por un proveedor SIMULADO, anulación con nota de crédito, cierre ciego conciliado por el Auditor | ✅ |
+| 6–7 | Inventario y honorarios, calidad y despliegue | Ver `PLAN_IMPLEMENTACION.md` |
 
 El detalle requisito por requisito está en `REQUIREMENTS_CHECKLIST.md`.
 
@@ -135,7 +136,7 @@ Por ser datos de salud, el service worker **sólo guarda la aplicación** (HTML,
 | `docs/03-modelo-datos.md` | Tablas, restricciones y reglas en la base. |
 | `docs/04-matriz-permisos.md` | Rol × permiso. |
 | `docs/05-trazabilidad-y-pruebas.md` | Requisito → prueba → estado, con los resultados reales. |
-| `docs/capturas/` | Pantallas de las Etapas 1 a 4. |
+| `docs/capturas/` | Pantallas de las Etapas 1 a 5. |
 
 ## Lo que este proyecto **no** afirma
 
@@ -143,5 +144,5 @@ Por ser datos de salud, el service worker **sólo guarda la aplicación** (HTML,
 - **Textos legales:** las plantillas de consentimiento y el formato de la receta son ejemplos; su validez depende de la normativa del país y de la asesoría jurídica de la clínica.
 - **Alertas de receta:** ayudan a detectar alergias y riesgo de sangrado registrados en la anamnesis, pero no reemplazan el criterio clínico ni una base de datos farmacológica.
 - **Archivos:** en desarrollo se guardan en disco (`ARCHIVOS_DIR`, por defecto `sigo-backend/archivos`, fuera del repositorio); en producción deberían ir a un almacenamiento cifrado (S3/Azure).
-- **País y facturación:** no se asume ningún país ni autoridad tributaria; la facturación será un adaptador simulado hasta que el cliente lo defina.
+- **País y facturación:** no se asume ningún país ni autoridad tributaria. Los comprobantes (`SIM-F-…`, `SIM-NC-…`) los emite un proveedor **SIMULADO** sin validez tributaria y no se calculan impuestos hasta que el cliente defina el país.
 - **RNF de rendimiento, disponibilidad y cifrado (TLS 1.3, AES-256):** dependen de la infraestructura y de mediciones que aún no se hicieron. Están marcados como pendientes, no como cumplidos.
