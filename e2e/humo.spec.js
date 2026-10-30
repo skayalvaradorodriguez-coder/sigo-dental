@@ -74,6 +74,7 @@ test("sin violaciones de la política de seguridad de contenidos (CSP)", async (
   await page.waitForTimeout(800);
   const frame = page.frames().find((f) => f !== page.mainFrame());
   if (frame) await expect.poll(() => frame.evaluate(() => getComputedStyle(document.body).marginTop)).toBe("24px");
+  await page.reload(); // cierra el detalle del presupuesto (en Firefox tapaba las pestañas)
   await page.getByRole("tab", { name: "Consentimientos" }).click();
   await page.getByRole("button", { name: "Nuevo consentimiento" }).click();
   await page.goto("/inventario");
