@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"sigo-backend/models"
+	"sigo-backend/notificaciones"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -122,6 +123,38 @@ type DBRepository interface {
 	ContarEventosSeguridad(ctx context.Context, desde time.Time) (map[string]int, error)
 	ResumenUsuarios(ctx context.Context) ([]UsuariosPorRol, error)
 	// catálogos
+	EstructuraSedes(ctx context.Context, soloActivos bool) ([]models.Sede, error)
+	SillonesActivos(ctx context.Context) ([]models.Sillon, error)
+	SillonActivo(ctx context.Context, id string) (bool, error)
+	Procedimientos(ctx context.Context, soloActivos bool) ([]models.Procedimiento, error)
+	Convenios(ctx context.Context, soloActivos bool) ([]models.Convenio, error)
+	Odontologos(ctx context.Context) ([]models.Odontologo, error)
+	EsOdontologoActivo(ctx context.Context, id string) (bool, error)
+	ProcedimientoActivo(ctx context.Context, id string) (bool, error)
+	CrearCatalogo(ctx context.Context, cat string, valores map[string]any) (map[string]any, error)
+	ActualizarCatalogo(ctx context.Context, cat, id string, valores map[string]any) (map[string]any, map[string]any, error)
+	// pacientes
+	BuscarPacientes(ctx context.Context, q string, page, limit int, hoy time.Time) (models.Pagina[models.Paciente], error)
+	PacientePorID(ctx context.Context, id string, hoy time.Time) (*models.Paciente, error)
+	CrearPaciente(ctx context.Context, d DatosPaciente, tutor *models.Tutor, creadoPor string) (string, error)
+	ActualizarPaciente(ctx context.Context, id string, d DatosPaciente, tutor *models.Tutor, tutorAccion string) error
+	HistorialAnamnesis(ctx context.Context, pacienteID string) ([]models.Anamnesis, error)
+	AgregarAnamnesis(ctx context.Context, pacienteID string, a models.Anamnesis, usuarioID string) (*models.Anamnesis, error)
+	ContactoPaciente(ctx context.Context, id string) (*DatosContacto, error)
+	ResumenAlertas(ctx context.Context, ids []string) (map[string][]string, map[string]bool, error)
+	ConteoPacientes(ctx context.Context) (int, int, error)
+	// agenda y notificaciones
+	ListarCitas(ctx context.Context, f FiltroCitas) ([]models.Cita, error)
+	CitaPorID(ctx context.Context, id string) (*models.Cita, error)
+	BuscarSuperposicion(ctx context.Context, sillonID string, inicio, fin time.Time, excluir string) (*Conflicto, error)
+	CrearCita(ctx context.Context, n NuevaCita, msgs []notificaciones.Planificada) (string, error)
+	CitaBase(ctx context.Context, id string) (*CitaBase, error)
+	Reprogramar(ctx context.Context, actual *CitaBase, sillonID, odontologoID string, inicio, fin time.Time, usuarioID string, msgs []notificaciones.Planificada) error
+	CambiarEstadoCita(ctx context.Context, actual *CitaBase, nuevo string, nota *string, usuarioID string) error
+	ConteoCitasPorEstado(ctx context.Context, desde, hasta time.Time, odontologoID string) (map[string]int, error)
+	NotificacionesDeCita(ctx context.Context, citaID string) ([]models.Notificacion, error)
+	BandejaNotificaciones(ctx context.Context, page, limit int) ([]models.Notificacion, error)
+	ProcesarVencidas(ctx context.Context, limite int, ahora time.Time, enviar func(EnvioPendiente) ResultadoEnvio) (int, int, error)
 }
 
 var _ DBRepository = (*Postgres)(nil)

@@ -11,8 +11,10 @@ Mismo stack y forma de trabajo que **catalogo-multinivel**: frontend en React + 
 | Etapa | Contenido | Estado |
 |---|---|---|
 | 1. Base | Login + MFA TOTP, sesiones con cierre por inactividad, roles y permisos, auditoría encadenada, usuarios, parámetros, panel por rol | ✅ |
-| 2. Pacientes y agenda | Catálogos, ficha única, anamnesis y alertas, agenda por sillón, estados, recordatorios | Siguiente |
+| 2. Pacientes y agenda | Catálogos, ficha única con tutor, anamnesis versionada, alertas críticas, agenda día/semana por sillón, 7 estados, recordatorios 48 h/24 h (simulados), sin superposición por sillón | ✅ |
 | 3–7 | Núcleo clínico, presupuestos y consentimientos, caja, inventario y honorarios, calidad y despliegue | Ver `PLAN_IMPLEMENTACION.md` |
+
+El detalle requisito por requisito está en `REQUIREMENTS_CHECKLIST.md`.
 
 ## Requisitos
 
@@ -97,6 +99,7 @@ npm test                                        # pruebas del frontend (Vitest)
 npm run lint
 ```
 
+Resultados y cobertura medidos: `docs/05-trazabilidad-y-pruebas.md`.
 
 ## Documentación de la API
 
@@ -122,9 +125,15 @@ Por ser datos de salud, el service worker **sólo guarda la aplicación** (HTML,
 
 | Archivo | Contenido |
 |---|---|
+| `PROJECT_MAP.md` | Mapa del repositorio: qué hay en cada carpeta y archivo. |
+| `REQUIREMENTS_CHECKLIST.md` | Estado de cada requisito del SRS (RF, RNF, RN) y de cada etapa. |
 | `PLAN_IMPLEMENTACION.md` | Plan por etapas con criterios de aceptación. |
 | `docs/01-analisis-requisitos.md` | Inventario, ambigüedades, supuestos y preguntas para el cliente. |
+| `docs/02-arquitectura.md` | Decisiones técnicas y qué depende del código o de la infraestructura. |
+| `docs/03-modelo-datos.md` | Tablas, restricciones y reglas en la base. |
 | `docs/04-matriz-permisos.md` | Rol × permiso. |
+| `docs/05-trazabilidad-y-pruebas.md` | Requisito → prueba → estado, con los resultados reales. |
+| `docs/capturas/` | Pantallas de las Etapas 1 y 2. |
 
 ## Lo que este proyecto **no** afirma
 

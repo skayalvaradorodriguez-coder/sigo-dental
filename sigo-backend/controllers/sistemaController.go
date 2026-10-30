@@ -8,6 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"sigo-backend/cache"
+	"sigo-backend/domain"
 	"sigo-backend/middleware"
 	"sigo-backend/permisos"
 	"sigo-backend/repository"
@@ -138,6 +139,34 @@ func (h *Controllers) Panel(c *fiber.Ctx) error {
 			}
 		}
 		w["seguridad"] = fiber.Map{"ultimas24h": conteo, "recientes": seg}
+	}
+	if a.Puede(permisos.CitasLeer) {
+		desde, hasta := domain.DiaLocal(h.Ahora(), h.Cfg.ZonaHoraria)
+		odo := ""
+		if a.Usuario.Rol == permisos.Odontologo {
+			odo = a.Usuario.ID // el odontólogo ve sólo su agenda
+		}
+		porEstado, err := h.Repo.ConteoCitasPorEstado(ctx, desde, hasta, odo)
+		if err != nil {
+			return h.errorInterno(c, err)
+		}
+		prox, err := h.Repo.ListarCitas(ctx, repository.FiltroCitas{Desde: desde, Hasta: hasta, OdontologoID: odo,
+			Estados: []string{domain.Programado, domain.Confirmado, domain.EnSalaEspera, domain.EnAtencion}, Limite: 8})
+		if err != nil {
+			return h.errorInterno(c, err)
+		}
+		alcance := "TODAS"
+		if odo != "" {
+			alcance = "MIAS"
+		}
+		w["agendaHoy"] = fiber.Map{"alcance": alcance, "porEstado": porEstado, "proximas": prox}
+	}
+	if a.Puede(permisos.PacientesLeer) {
+		total, sin, err := h.Repo.ConteoPacientes(ctx)
+		if err != nil {
+			return h.errorInterno(c, err)
+		}
+		w["pacientes"] = fiber.Map{"total": total, "anamnesisPendiente": sin}
 	}
 	n, _ := h.Repo.SesionesAbiertas(ctx, a.Usuario.ID)
 	w["yo"] = fiber.Map{"ultimoAcceso": a.Usuario.UltimoAcceso, "sesionesAbiertas": n}

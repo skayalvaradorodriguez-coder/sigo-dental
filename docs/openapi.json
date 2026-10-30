@@ -1,0 +1,2274 @@
+{
+  "components": {
+    "schemas": {
+      "APIError": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          },
+          "extra": {
+            "type": "object"
+          },
+          "message": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "bearer": {
+        "bearerFormat": "JWT",
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "description": "Generado con `go run . openapi` desde el registro real de rutas (routes.go). Errores: {status, code, message, error, extra?}. Todos los datos de ejemplo son ficticios.",
+    "title": "SIGO-Dental API",
+    "version": "0.2.0"
+  },
+  "openapi": "3.0.3",
+  "paths": {
+    "/api/ajustes": {
+      "get": {
+        "description": "Acceso: sesión completa + permiso ajustes.gestionar.",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Parámetros configurables con rango y valor por defecto.",
+        "tags": [
+          "ajustes"
+        ],
+        "x-politica": "permisos:ajustes.gestionar"
+      }
+    },
+    "/api/ajustes/{clave}": {
+      "put": {
+        "description": "Acceso: sesión completa + permiso ajustes.gestionar.\n\nCuerpo JSON: `{valor}` (campos desconocidos ⇒ 400).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clave",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Guarda un parámetro (auditado con el valor anterior).",
+        "tags": [
+          "ajustes"
+        ],
+        "x-politica": "permisos:ajustes.gestionar"
+      }
+    },
+    "/api/auditoria": {
+      "get": {
+        "description": "Acceso: sesión completa + permiso auditoria.leer.",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Bitácora paginada. Filtros: accion, entidad, entidadId, usuarioId, desde, hasta, page, limit.",
+        "tags": [
+          "auditoria"
+        ],
+        "x-politica": "permisos:auditoria.leer"
+      }
+    },
+    "/api/auditoria/verificar": {
+      "post": {
+        "description": "Acceso: sesión completa + permiso auditoria.leer.",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Recorre la cadena de hashes SHA-256 y reporta si hay alteraciones.",
+        "tags": [
+          "auditoria"
+        ],
+        "x-politica": "permisos:auditoria.leer"
+      }
+    },
+    "/api/catalogos/convenios": {
+      "get": {
+        "description": "Acceso: sesión completa + alguno de: catalogos.gestionar, citas.leer, pacientes.leer.",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Seguros y convenios. Caché Redis.",
+        "tags": [
+          "catalogos"
+        ],
+        "x-politica": "alguno:catalogos.gestionar|citas.leer|pacientes.leer"
+      }
+    },
+    "/api/catalogos/estructura": {
+      "get": {
+        "description": "Acceso: sesión completa + alguno de: catalogos.gestionar, citas.leer, pacientes.leer.",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Sedes → consultorios → sillones (?todos=true incluye inactivos, sólo admin). Caché Redis.",
+        "tags": [
+          "catalogos"
+        ],
+        "x-politica": "alguno:catalogos.gestionar|citas.leer|pacientes.leer"
+      }
+    },
+    "/api/catalogos/odontologos": {
+      "get": {
+        "description": "Acceso: sesión completa + alguno de: catalogos.gestionar, citas.leer, pacientes.leer.",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Odontólogos activos (para la agenda).",
+        "tags": [
+          "catalogos"
+        ],
+        "x-politica": "alguno:catalogos.gestionar|citas.leer|pacientes.leer"
+      }
+    },
+    "/api/catalogos/procedimientos": {
+      "get": {
+        "description": "Acceso: sesión completa + alguno de: catalogos.gestionar, citas.leer, pacientes.leer.",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Procedimientos (código, duración, arancel). Caché Redis.",
+        "tags": [
+          "catalogos"
+        ],
+        "x-politica": "alguno:catalogos.gestionar|citas.leer|pacientes.leer"
+      }
+    },
+    "/api/catalogos/sillones": {
+      "get": {
+        "description": "Acceso: sesión completa + alguno de: catalogos.gestionar, citas.leer, pacientes.leer.",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Sillones activos con consultorio y sede. Caché Redis (X-Cache).",
+        "tags": [
+          "catalogos"
+        ],
+        "x-politica": "alguno:catalogos.gestionar|citas.leer|pacientes.leer"
+      }
+    },
+    "/api/catalogos/{tipo}": {
+      "post": {
+        "description": "Acceso: sesión completa + permiso catalogos.gestionar.\n\nCuerpo JSON: `según :tipo` (campos desconocidos ⇒ 400).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tipo",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Crea en sedes | consultorios | sillones | procedimientos | convenios. Invalida la caché.",
+        "tags": [
+          "catalogos"
+        ],
+        "x-politica": "permisos:catalogos.gestionar"
+      }
+    },
+    "/api/catalogos/{tipo}/{id}": {
+      "patch": {
+        "description": "Acceso: sesión completa + permiso catalogos.gestionar.\n\nCuerpo JSON: `según :tipo` (campos desconocidos ⇒ 400).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tipo",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Modifica o desactiva (nunca se borra). Invalida la caché.",
+        "tags": [
+          "catalogos"
+        ],
+        "x-politica": "permisos:catalogos.gestionar"
+      }
+    },
+    "/api/citas": {
+      "get": {
+        "description": "Acceso: sesión completa + permiso citas.leer.",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Citas en un rango (desde, hasta ISO-8601; máx. 31 días). Filtros: sillonId, odontologoId, pacienteId.",
+        "tags": [
+          "citas"
+        ],
+        "x-politica": "permisos:citas.leer"
+      },
+      "post": {
+        "description": "Acceso: sesión completa + permiso citas.escribir.\n\nCuerpo JSON: `{pacienteId, odontologoId, sillonId, procedimientoId?, inicio, duracionMin, motivo?}` (campos desconocidos ⇒ 400).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Agenda una cita (RF-09). Sillón ocupado ⇒ 409 SILLON_OCUPADO con extra.conflicto (RN-03).",
+        "tags": [
+          "citas"
+        ],
+        "x-politica": "permisos:citas.escribir"
+      }
+    },
+    "/api/citas/{id}": {
+      "get": {
+        "description": "Acceso: sesión completa + permiso citas.leer.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Detalle con historial de estados y mensajes programados.",
+        "tags": [
+          "citas"
+        ],
+        "x-politica": "permisos:citas.leer"
+      }
+    },
+    "/api/citas/{id}/estado": {
+      "post": {
+        "description": "Acceso: sesión completa + permiso citas.escribir.\n\nCuerpo JSON: `{estado, nota?}` (campos desconocidos ⇒ 400).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cambio de estado (RF-10). CANCELADO exige nota; NO_ASISTIO sólo desde la hora de la cita.",
+        "tags": [
+          "citas"
+        ],
+        "x-politica": "permisos:citas.escribir"
+      }
+    },
+    "/api/citas/{id}/reprogramar": {
+      "patch": {
+        "description": "Acceso: sesión completa + permiso citas.escribir.\n\nCuerpo JSON: `{inicio, duracionMin, sillonId?, odontologoId?}` (campos desconocidos ⇒ 400).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Nuevo horario/sillón/odontólogo; rehace los recordatorios pendientes.",
+        "tags": [
+          "citas"
+        ],
+        "x-politica": "permisos:citas.escribir"
+      }
+    },
+    "/api/health": {
+      "get": {
+        "description": "Acceso: pública.",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          }
+        },
+        "summary": "Estado de la API, la base y Redis (ok | degraded).",
+        "tags": [
+          "health"
+        ],
+        "x-politica": "publica"
+      }
+    },
+    "/api/heartbeat": {
+      "post": {
+        "description": "Acceso: sesión completa (MFA verificado).",
+        "responses": {
+          "204": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Marca actividad del usuario (evita el cierre por inactividad).",
+        "tags": [
+          "heartbeat"
+        ],
+        "x-politica": "completa"
+      }
+    },
+    "/api/login": {
+      "post": {
+        "description": "Acceso: pública.\n\nCuerpo JSON: `{email, password}` (campos desconocidos ⇒ 400).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          }
+        },
+        "summary": "Primer factor. Devuelve {token, siguientePaso}. Límite: 10/min por IP.",
+        "tags": [
+          "login"
+        ],
+        "x-politica": "publica"
+      }
+    },
+    "/api/logout": {
+      "post": {
+        "description": "Acceso: token válido (aunque falte MFA o cambio de contraseña).",
+        "responses": {
+          "204": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Revoca la sesión actual.",
+        "tags": [
+          "logout"
+        ],
+        "x-politica": "sesion"
+      }
+    },
+    "/api/me": {
+      "get": {
+        "description": "Acceso: token válido (aunque falte MFA o cambio de contraseña).",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Perfil, permisos, sesión (minutosInactividad) y siguientePaso.",
+        "tags": [
+          "me"
+        ],
+        "x-politica": "sesion"
+      }
+    },
+    "/api/mfa/activar": {
+      "post": {
+        "description": "Acceso: token válido (aunque falte MFA o cambio de contraseña).\n\nCuerpo JSON: `{codigo}` (campos desconocidos ⇒ 400).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Activa MFA con el primer código válido. Rota el token.",
+        "tags": [
+          "mfa"
+        ],
+        "x-politica": "sesion"
+      }
+    },
+    "/api/mfa/configurar": {
+      "post": {
+        "description": "Acceso: token válido (aunque falte MFA o cambio de contraseña).",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Genera el secreto TOTP y la URL otpauth:// para el QR.",
+        "tags": [
+          "mfa"
+        ],
+        "x-politica": "sesion"
+      }
+    },
+    "/api/mfa/verificar": {
+      "post": {
+        "description": "Acceso: token válido (aunque falte MFA o cambio de contraseña).\n\nCuerpo JSON: `{codigo}` (campos desconocidos ⇒ 400).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Segundo factor (TOTP RFC 6238, anti-replay). Rota el token.",
+        "tags": [
+          "mfa"
+        ],
+        "x-politica": "sesion"
+      }
+    },
+    "/api/notificaciones": {
+      "get": {
+        "description": "Acceso: sesión completa + permiso citas.leer.",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Bandeja de mensajes (RF-11) e indicador de proveedor simulado.",
+        "tags": [
+          "notificaciones"
+        ],
+        "x-politica": "permisos:citas.leer"
+      }
+    },
+    "/api/notificaciones/procesar": {
+      "post": {
+        "description": "Acceso: sesión completa + permiso citas.escribir.",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Procesa ahora los mensajes vencidos (también corre cada 30 s en segundo plano).",
+        "tags": [
+          "notificaciones"
+        ],
+        "x-politica": "permisos:citas.escribir"
+      }
+    },
+    "/api/pacientes": {
+      "get": {
+        "description": "Acceso: sesión completa + permiso pacientes.leer.",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Búsqueda paginada (q, page, limit) con alertas. La búsqueda se audita.",
+        "tags": [
+          "pacientes"
+        ],
+        "x-politica": "permisos:pacientes.leer"
+      },
+      "post": {
+        "description": "Acceso: sesión completa + permiso pacientes.escribir.\n\nCuerpo JSON: `{tipoDocumento, numeroDocumento, nombres, apellidos, fechaNacimiento, sexo, telefono?, email?, direccion?, emergenciaNombre, emergenciaTelefono, emergenciaParentesco?, canalPreferido, autorizaMensajes, convenioId?, numeroAfiliado?, tutor?}` (campos desconocidos ⇒ 400).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Alta (RF-01). Menor de edad ⇒ tutor obligatorio. Documento único.",
+        "tags": [
+          "pacientes"
+        ],
+        "x-politica": "permisos:pacientes.escribir"
+      }
+    },
+    "/api/pacientes/{id}": {
+      "get": {
+        "description": "Acceso: sesión completa + permiso pacientes.leer.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ficha única con tutor y alertas (lectura auditada).",
+        "tags": [
+          "pacientes"
+        ],
+        "x-politica": "permisos:pacientes.leer"
+      },
+      "put": {
+        "description": "Acceso: sesión completa + permiso pacientes.escribir.\n\nCuerpo JSON: `igual que POST + {quitarTutor?}` (campos desconocidos ⇒ 400).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reemplazo completo de la ficha; auditoría con valor anterior y nuevo. quitarTutor=true retira el tutor (sólo adultos).",
+        "tags": [
+          "pacientes"
+        ],
+        "x-politica": "permisos:pacientes.escribir"
+      }
+    },
+    "/api/pacientes/{id}/anamnesis": {
+      "get": {
+        "description": "Acceso: sesión completa + alguno de: clinica.leer, anamnesis.escribir.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Historial de versiones de la anamnesis (lectura auditada).",
+        "tags": [
+          "pacientes"
+        ],
+        "x-politica": "alguno:clinica.leer|anamnesis.escribir"
+      },
+      "post": {
+        "description": "Acceso: sesión completa + permiso anamnesis.escribir.\n\nCuerpo JSON: `{enfermedadesSistemicas[], alergias[{sustancia,tipo,reaccion?}], coagulopatia, anticoagulado, embarazo?, antecedentesQuirurgicos?, medicacionActual?, otraCondicionCritica?, observaciones?}` (campos desconocidos ⇒ 400).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Nueva versión de anamnesis (RF-02); las anteriores son inmutables.",
+        "tags": [
+          "pacientes"
+        ],
+        "x-politica": "permisos:anamnesis.escribir"
+      }
+    },
+    "/api/panel": {
+      "get": {
+        "description": "Acceso: sesión completa (MFA verificado).",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Widgets del panel según los permisos del rol.",
+        "tags": [
+          "panel"
+        ],
+        "x-politica": "completa"
+      }
+    },
+    "/api/password": {
+      "post": {
+        "description": "Acceso: token válido (aunque falte MFA o cambio de contraseña).\n\nCuerpo JSON: `{actual, nueva}` (campos desconocidos ⇒ 400).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cambio de contraseña (obligatorio en el primer ingreso).",
+        "tags": [
+          "password"
+        ],
+        "x-politica": "sesion"
+      }
+    },
+    "/api/usuarios": {
+      "get": {
+        "description": "Acceso: sesión completa + permiso usuarios.gestionar.",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Lista de usuarios (sin hashes ni secretos MFA).",
+        "tags": [
+          "usuarios"
+        ],
+        "x-politica": "permisos:usuarios.gestionar"
+      },
+      "post": {
+        "description": "Acceso: sesión completa + permiso usuarios.gestionar.\n\nCuerpo JSON: `{email, nombre, rol, registroProfesional?}` (campos desconocidos ⇒ 400).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Alta de usuario; devuelve una contraseña temporal (se muestra una vez).",
+        "tags": [
+          "usuarios"
+        ],
+        "x-politica": "permisos:usuarios.gestionar"
+      }
+    },
+    "/api/usuarios/roles": {
+      "get": {
+        "description": "Acceso: sesión completa + permiso usuarios.gestionar.",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Matriz rol → permisos.",
+        "tags": [
+          "usuarios"
+        ],
+        "x-politica": "permisos:usuarios.gestionar"
+      }
+    },
+    "/api/usuarios/{id}": {
+      "patch": {
+        "description": "Acceso: sesión completa + permiso usuarios.gestionar.\n\nCuerpo JSON: `{nombre?, rol?, registroProfesional?, activo?}` (campos desconocidos ⇒ 400).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cambia nombre, rol, registro o activo (desactivar revoca sesiones).",
+        "tags": [
+          "usuarios"
+        ],
+        "x-politica": "permisos:usuarios.gestionar"
+      }
+    },
+    "/api/usuarios/{id}/restablecer-mfa": {
+      "post": {
+        "description": "Acceso: sesión completa + permiso usuarios.gestionar.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Elimina el MFA del usuario y revoca sesiones.",
+        "tags": [
+          "usuarios"
+        ],
+        "x-politica": "permisos:usuarios.gestionar"
+      }
+    },
+    "/api/usuarios/{id}/restablecer-password": {
+      "post": {
+        "description": "Acceso: sesión completa + permiso usuarios.gestionar.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Genera contraseña temporal y revoca sesiones.",
+        "tags": [
+          "usuarios"
+        ],
+        "x-politica": "permisos:usuarios.gestionar"
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000"
+    }
+  ]
+}

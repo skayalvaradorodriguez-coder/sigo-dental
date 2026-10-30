@@ -16,7 +16,7 @@ import {
   Users,
 } from "lucide-react";
 
-export const ETAPA_ACTUAL = 1;
+export const ETAPA_ACTUAL = 2;
 
 export const MODULOS = [
   { ruta: "/", etiqueta: "Panel", icono: LayoutDashboard, permisos: [], grupo: "principal", etapa: 1 },
@@ -28,8 +28,6 @@ export const MODULOS = [
     grupo: "principal",
     etapa: 2,
     requisitos: "RF-01, RF-02",
-    resumen:
-      "Ficha única del paciente, tutor legal para menores, convenios, anamnesis obligatoria y alertas médicas visibles en la cabecera.",
   },
   {
     ruta: "/agenda",
@@ -39,8 +37,6 @@ export const MODULOS = [
     grupo: "principal",
     etapa: 2,
     requisitos: "RF-09, RF-10, RF-11, RN-03",
-    resumen:
-      "Vista día/semana por sillón y profesional, estados de cita, recordatorios a 48 h y 24 h, y bloqueo de citas superpuestas en el mismo sillón.",
   },
   {
     ruta: "/expediente",

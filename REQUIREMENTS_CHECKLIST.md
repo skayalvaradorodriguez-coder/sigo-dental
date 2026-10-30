@@ -1,0 +1,105 @@
+# REQUIREMENTS CHECKLIST — SIGO-Dental
+
+> Fuente de verdad del progreso. Leer al inicio de cada sesión; marcar `- [x]`
+> y actualizar "Estado General" al completar cualquier tarea.
+>
+> Una casilla se marca sólo cuando su prueba pasa (ver `docs/05-trazabilidad-y-pruebas.md`).
+> Lo que depende de infraestructura o de mediciones queda como ⏳ **pendiente de validación**,
+> aunque el código esté preparado.
+
+## Estado General
+
+| Campo | Valor |
+|---|---|
+| **Etapa actual** | Etapa 2 completada · siguiente: Etapa 3 (núcleo clínico) |
+| **Última tarea completada** | Etapa 2: pacientes, anamnesis, alertas, catálogos, agenda, estados, recordatorios simulados, RN-03; frontend JavaScript; OpenAPI generado; documentación (2026-10-30) |
+| **Siguiente tarea pendiente** | E3-01: odontograma FDI/Universal por superficies (RF-03) |
+| **Pruebas** | Go: 17 unitarias + 38 de integración ✅ · Frontend: 11 (Vitest) ✅ · Humo PowerShell ✅ · Navegador (5 roles) ✅ |
+| **Cobertura backend** | 76,3 % de sentencias (medida). Meta del SRS 8.2: ≥ 80 % → pendiente |
+| **Bloqueadores** | Ninguno para la Etapa 3. Preguntas abiertas al cliente: Q-01…Q-06 (`docs/01-analisis-requisitos.md` §1.4) |
+
+## Stack (igual a catalogo-multinivel)
+
+- [x] Frontend React 19 + **JavaScript** + Vite + Tailwind + React Router, en la raíz
+- [x] PWA (`vite-plugin-pwa`): manifiesto, íconos, service worker, aviso de actualización, instalar app — **sin caché de datos clínicos**
+- [x] Backend Go + Fiber en `sigo-backend/`: `routes → controllers → repository`, `models.APIError`
+- [x] PostgreSQL 16 (pgx) y Redis (go-redis, Cache-Aside, degradación sin Redis)
+- [x] JWT (Bearer) + bcrypt; `apiFetch` único en `services/http.js`
+- [x] Inyección de dependencias por interfaces (`DBRepository`, `CacheRepository`, `Mensajeria`)
+- [x] Goroutine en segundo plano con apagado ordenado (`WaitGroup`)
+- [x] `scripts/prueba-api.ps1`, `PROJECT_MAP.md`, `.windsurfrules`, plan por etapas
+- [ ] Dockerfile + `render.yaml` + Neon (Etapa 7)
+
+## Requerimientos funcionales (SRS §4)
+
+### Pacientes
+- [x] **RF-01** Ficha única: datos demográficos, contacto de emergencia, convenio, alta/consulta/modificación
+  - [x] Tutor legal obligatorio para menores de 18 (API `TUTOR_REQUERIDO` + formulario)
+  - [x] Documento único por tipo (409); fecha de nacimiento no futura
+  - [x] Modificaciones auditadas con valor anterior y nuevo; lecturas y búsquedas auditadas
+  - [x] Pacientes no se borran (trigger)
+- [x] **RF-02** Anamnesis obligatoria y alertas
+  - [x] Enfermedades sistémicas, alergias (tipo y reacción), antecedentes quirúrgicos, coagulopatía, anticoagulado, embarazo, otra condición crítica
+  - [x] Versionada; versiones anteriores inmutables (trigger)
+  - [x] *Badge* rojo de alerta crítica en la cabecera, la lista, la agenda y el detalle de la cita
+  - [x] Recepción ve las alertas pero no el detalle clínico
+  - [ ] Bloquear registros clínicos si la anamnesis está pendiente (Etapa 3)
+
+### Clínico (Etapa 3–4)
+- [ ] **RF-03** Odontograma 2D: 32 permanentes y 20 temporales, FDI y Universal, superficies M/D/O-I/V/L-P, catálogo visual
+- [ ] **RF-04** Periodontograma: sondaje en 6 puntos, margen gingival, NIC, furca, movilidad, sangrado
+- [ ] **RF-05** Notas SOEP: bitácora cronológica, bloqueo tras el plazo configurable (parámetro ✅ ya existe: 24 h), firma del profesional (firma electrónica simple)
+- [ ] **RF-06** Consentimiento informado por procedimiento: firma manuscrita digitalizada u OTP (proveedor simulado)
+
+### Presupuestos (Etapa 4)
+- [ ] **RF-07** Presupuestos por fases/sesiones: honorarios, laboratorio, descuentos autorizados
+- [ ] **RF-08** Aprobación total o parcial → tareas agendables
+
+### Agenda
+- [x] **RF-09** Calendario día/semana por sillón y profesional, multisede (sede → consultorio → sillón)
+- [x] **RF-10** Estados Programado, Confirmado, En sala de espera, En atención, Atendido, Cancelado, No asistió, con historial
+- [x] **RF-11** Confirmación y recordatorios 48 h y 24 h por canal preferido — proveedor **SIMULADO** rotulado
+  - [ ] ⏳ Proveedor real (WhatsApp Business / Twilio) — requiere credenciales del cliente
+
+### Caja y facturación (Etapa 5)
+- [ ] **RF-12** Pagos mixtos y comprobante electrónico vía adaptador (simulado hasta definir país, Q-01)
+
+### Honorarios e inventario (Etapa 6)
+- [ ] **RF-13** Reglas de honorarios: % fijo, monto fijo, % neto de laboratorio/materiales
+- [ ] **RF-14** Descargo automático de insumos según receta de consumo
+
+## Reglas de negocio (SRS §6)
+- [ ] **RN-01** Procedimiento realizado no se borra; correcciones por adenda (Etapa 3)
+- [ ] **RN-02** Cierre de caja ciego (Etapa 5) — permiso `caja.revisar` sólo para el Auditor ✅
+- [x] **RN-03** Sin dos citas simultáneas en el mismo sillón: `EXCLUDE USING gist` + 409 con la cita en conflicto; 20 peticiones simultáneas ⇒ 1 éxito
+
+## Requerimientos no funcionales (SRS §5)
+- [ ] ⏳ **RNF-01** Expediente < 1,5 s — medición en la Etapa 7
+- [ ] ⏳ **RNF-02** Disponibilidad 99,9 % — infraestructura
+- [ ] ⏳ **RNF-03** 150 usuarios concurrentes — prueba de carga en la Etapa 7
+- [ ] ⏳ **RNF-04** TLS 1.3 y AES-256 en reposo — infraestructura (Etapa 7)
+- [x] **RNF-05** Seguridad de acceso
+  - [x] RBAC con menor privilegio; toda ruta con política (prueba automática)
+  - [x] MFA TOTP obligatorio, anti-replay, rotación de token, enrolamiento con QR
+  - [x] Cierre por inactividad (15 min, configurable 5–15) en servidor y cliente
+  - [x] Bloqueo tras 5 intentos (configurable), límite de 10 logins/min, sin enumeración de usuarios
+- [x] **RNF-06** Auditoría inmutable: quién, qué, cuándo (ISO-8601), IP; cadena de hashes verificable
+  - [x] Autenticación, administración, pacientes (lecturas y cambios), anamnesis, citas
+  - [ ] Notas, odontograma y demás entidades clínicas (Etapa 3+)
+- [x] **RNF-07** Responsive: escritorio y celular verificados · [ ] tablet 10,5" y 1920×1080 automatizados (Etapa 7)
+- [ ] **RNF-08** Navegadores: hoy probado en Chromium; Firefox, WebKit/Safari y Edge en la Etapa 7
+
+## Criterios técnicos (SRS §8.2)
+- [x] OpenAPI 3 generado del código (`go run . openapi`)
+- [ ] ⏳ Cobertura ≥ 80 % — medida 76,3 %
+- [ ] ⏳ DAST/SAST sin hallazgos Altos/Críticos (ZAP, gosec, govulncheck, npm audit) — Etapa 7
+
+## Etapas
+
+- [x] **Etapa 1 — Base** (configuración, BD, autenticación, roles, navegación)
+- [x] **Etapa 2 — Pacientes y agenda**
+- [ ] **Etapa 3 — Núcleo clínico** (RF-03, RF-04, RF-05, RN-01)
+- [ ] **Etapa 4 — Planes y consentimientos** (RF-06, RF-07, RF-08)
+- [ ] **Etapa 5 — Caja y facturación** (RF-12, RN-02)
+- [ ] **Etapa 6 — Inventario y honorarios** (RF-13, RF-14)
+- [ ] **Etapa 7 — Calidad y salida** (RNF-01…04, RNF-08, 8.2, despliegue Render + Neon)

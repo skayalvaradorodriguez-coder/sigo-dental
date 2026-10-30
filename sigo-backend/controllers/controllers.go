@@ -17,19 +17,21 @@ import (
 	"sigo-backend/config"
 	"sigo-backend/middleware"
 	"sigo-backend/models"
+	"sigo-backend/notificaciones"
 	"sigo-backend/repository"
 	"sigo-backend/validacion"
 )
 
 type Controllers struct {
-	Repo  repository.DBRepository
-	Cache cache.CacheRepository
-	Cfg   config.Config
-	Ahora func() time.Time // inyectable en pruebas
+	Repo        repository.DBRepository
+	Cache       cache.CacheRepository
+	Cfg         config.Config
+	Despachador *notificaciones.Despachador
+	Ahora       func() time.Time // inyectable en pruebas
 }
 
-func NewControllers(repo repository.DBRepository, c cache.CacheRepository, cfg config.Config) *Controllers {
-	return &Controllers{Repo: repo, Cache: c, Cfg: cfg, Ahora: time.Now}
+func NewControllers(repo repository.DBRepository, c cache.CacheRepository, cfg config.Config, d *notificaciones.Despachador) *Controllers {
+	return &Controllers{Repo: repo, Cache: c, Cfg: cfg, Despachador: d, Ahora: time.Now}
 }
 
 // ------------------------------------------------------------------ respuestas
