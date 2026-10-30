@@ -1,0 +1,141 @@
+package routes
+
+import (
+	"encoding/json"
+	"sort"
+	"strings"
+)
+
+// Doc describe una ruta para el OpenAPI. La política de acceso NO se escribe aquí: se toma del
+// registro real de rutas (Registro.Politica), así la documentación no puede contradecir al código.
+type Doc struct {
+	Resumen string
+	Cuerpo  string // campos del JSON de entrada (si aplica)
+	Exito   int    // código HTTP de éxito
+}
+
+// Docs: una entrada por ruta. pruebas/auth_test.go falla si se registra una ruta sin documentar.
+var Docs = map[string]Doc{
+	"GET /api/health":                             {"Estado de la API, la base y Redis (ok | degraded).", "", 200},
+	"POST /api/login":                             {"Primer factor. Devuelve {token, siguientePaso}. Límite: 10/min por IP.", "{email, password}", 200},
+	"POST /api/mfa/verificar":                     {"Segundo factor (TOTP RFC 6238, anti-replay). Rota el token.", "{codigo}", 200},
+	"POST /api/mfa/configurar":                    {"Genera el secreto TOTP y la URL otpauth:// para el QR.", "", 200},
+	"POST /api/mfa/activar":                       {"Activa MFA con el primer código válido. Rota el token.", "{codigo}", 200},
+	"POST /api/password":                          {"Cambio de contraseña (obligatorio en el primer ingreso).", "{actual, nueva}", 204},
+	"POST /api/logout":                            {"Revoca la sesión actual.", "", 204},
+	"GET /api/me":                                 {"Perfil, permisos, sesión (minutosInactividad) y siguientePaso.", "", 200},
+	"POST /api/heartbeat":                         {"Marca actividad del usuario (evita el cierre por inactividad).", "", 204},
+	"GET /api/panel":                              {"Widgets del panel según los permisos del rol.", "", 200},
+	"GET /api/usuarios":                           {"Lista de usuarios (sin hashes ni secretos MFA).", "", 200},
+	"GET /api/usuarios/roles":                     {"Matriz rol → permisos.", "", 200},
+	"POST /api/usuarios":                          {"Alta de usuario; devuelve una contraseña temporal (se muestra una vez).", "{email, nombre, rol, registroProfesional?}", 201},
+	"PATCH /api/usuarios/:id":                     {"Cambia nombre, rol, registro o activo (desactivar revoca sesiones).", "{nombre?, rol?, registroProfesional?, activo?}", 200},
+	"POST /api/usuarios/:id/restablecer-password": {"Genera contraseña temporal y revoca sesiones.", "", 200},
+	"POST /api/usuarios/:id/restablecer-mfa":      {"Elimina el MFA del usuario y revoca sesiones.", "", 204},
+	"GET /api/ajustes":                            {"Parámetros configurables con rango y valor por defecto.", "", 200},
+	"PUT /api/ajustes/:clave":                     {"Guarda un parámetro (auditado con el valor anterior).", "{valor}", 200},
+	"GET /api/auditoria":                          {"Bitácora paginada. Filtros: accion, entidad, entidadId, usuarioId, desde, hasta, page, limit.", "", 200},
+	"POST /api/auditoria/verificar":               {"Recorre la cadena de hashes SHA-256 y reporta si hay alteraciones.", "", 200},
+}
+
+// OpenAPI arma un documento OpenAPI 3.0 a partir del registro de rutas.
+func OpenAPI(registro []Registro) ([]byte, error) {
+	rutas := map[string]map[string]any{}
+	sort.Slice(registro, func(i, j int) bool { return registro[i].Ruta < registro[j].Ruta })
+	for _, r := range registro {
+		d := Docs[r.Metodo+" "+r.Ruta]
+		ruta := r.Ruta
+		var params []any
+		for _, seg := range strings.Split(ruta, "/") {
+			if strings.HasPrefix(seg, ":") {
+				params = append(params, map[string]any{"name": seg[1:], "in": "path", "required": true, "schema": map[string]string{"type": "string"}})
+				ruta = strings.Replace(ruta, seg, "{"+seg[1:]+"}", 1)
+			}
+		}
+		etiqueta := strings.Split(strings.TrimPrefix(r.Ruta, "/api/"), "/")[0]
+		op := map[string]any{
+			"summary":     d.Resumen,
+			"tags":        []string{etiqueta},
+			"x-politica":  r.Politica,
+			"description": "Acceso: " + describir(r.Politica) + cuerpo(d.Cuerpo),
+			"responses":   respuestas(d.Exito, r.Politica),
+		}
+		if len(params) > 0 {
+			op["parameters"] = params
+		}
+		if r.Politica != "publica" {
+			op["security"] = []map[string][]string{{"bearer": {}}}
+		}
+		if d.Cuerpo != "" {
+			op["requestBody"] = map[string]any{"required": true, "content": map[string]any{"application/json": map[string]any{"schema": map[string]string{"type": "object"}}}}
+		}
+		if rutas[ruta] == nil {
+			rutas[ruta] = map[string]any{}
+		}
+		rutas[ruta][strings.ToLower(r.Metodo)] = op
+	}
+	doc := map[string]any{
+		"openapi": "3.0.3",
+		"info": map[string]any{
+			"title":       "SIGO-Dental API",
+			"version":     "0.2.0",
+			"description": "Generado con `go run . openapi` desde el registro real de rutas (routes.go). Errores: {status, code, message, error, extra?}. Todos los datos de ejemplo son ficticios.",
+		},
+		"servers": []map[string]string{{"url": "http://localhost:3000"}},
+		"components": map[string]any{
+			"securitySchemes": map[string]any{"bearer": map[string]string{"type": "http", "scheme": "bearer", "bearerFormat": "JWT"}},
+			"schemas": map[string]any{"APIError": map[string]any{"type": "object", "properties": map[string]any{
+				"status": map[string]string{"type": "integer"}, "code": map[string]string{"type": "string"},
+				"message": map[string]string{"type": "string"}, "error": map[string]string{"type": "string"},
+				"extra": map[string]string{"type": "object"}}}},
+		},
+		"paths": rutas,
+	}
+	return json.MarshalIndent(doc, "", "  ")
+}
+
+func describir(p string) string {
+	switch {
+	case p == "publica":
+		return "pública."
+	case p == "sesion":
+		return "token válido (aunque falte MFA o cambio de contraseña)."
+	case p == "completa":
+		return "sesión completa (MFA verificado)."
+	case strings.HasPrefix(p, "permisos:"):
+		return "sesión completa + permiso " + strings.ReplaceAll(strings.TrimPrefix(p, "permisos:"), "+", " y ") + "."
+	default:
+		return "sesión completa + alguno de: " + strings.ReplaceAll(strings.TrimPrefix(p, "alguno:"), "|", ", ") + "."
+	}
+}
+
+func cuerpo(c string) string {
+	if c == "" {
+		return ""
+	}
+	return "\n\nCuerpo JSON: `" + c + "` (campos desconocidos ⇒ 400)."
+}
+
+func respuestas(exito int, politica string) map[string]any {
+	err := map[string]any{"content": map[string]any{"application/json": map[string]any{"schema": map[string]string{"$ref": "#/components/schemas/APIError"}}}}
+	con := func(desc string) map[string]any {
+		r := map[string]any{"description": desc}
+		for k, v := range err {
+			r[k] = v
+		}
+		return r
+	}
+	if exito == 0 {
+		exito = 200
+	}
+	r := map[string]any{itoa3(exito): map[string]string{"description": "Éxito"}, "400": con("VALIDACION u otro error de entrada")}
+	if politica != "publica" {
+		r["401"] = con("NO_AUTENTICADO / SESION_EXPIRADA")
+		r["403"] = con("PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO")
+	}
+	return r
+}
+
+func itoa3(n int) string {
+	return string(rune('0'+n/100)) + string(rune('0'+n/10%10)) + string(rune('0'+n%10))
+}
