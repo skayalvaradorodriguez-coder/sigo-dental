@@ -1,0 +1,35 @@
+# PostgreSQL 16 + Redis para desarrollo local. Uso (en sigo-backend/): docker compose up -d
+# Puertos propios para convivir con otros proyectos del equipo:
+#   PostgreSQL → 5434 (5432 suele ser un PostgreSQL instalado en Windows; 5433, la versión anterior)
+#   Redis      → 6380 (6379 lo usa catalogo-multinivel)
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: sigo-go-db
+    environment:
+      POSTGRES_USER: sigo
+      POSTGRES_PASSWORD: sigo_dev # sólo desarrollo local
+      POSTGRES_DB: sigo_dental
+      TZ: UTC
+    ports:
+      - "5434:5432"
+    volumes:
+      - sigo_go_pgdata:/var/lib/postgresql/data
+      - ./database/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sigo -d sigo_dental"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  redis:
+    image: redis:7-alpine
+    container_name: sigo-go-redis
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+volumes:
+  sigo_go_pgdata:
