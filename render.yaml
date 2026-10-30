@@ -25,11 +25,9 @@ services:
         sync: false
       - key: JWT_SECRET
         generateValue: true
-      - key: REDIS_URL       # redis://host:puerto de la red privada de Render
-        fromService:
-          type: keyvalue
-          name: sigo-redis
-          property: connectionString
+      # Redis (caché): el plan gratuito admite un solo Key Value por cuenta. Sin REDIS_URL la API
+      # funciona sin caché (/api/health = "degraded"). Para activarlo, cree un Key Value y pegue aquí
+      # su "Internal URL" (redis://…) en Environment → REDIS_URL.
       - key: WEB_ORIGIN      # https://<su-servicio>.onrender.com o el dominio propio
         sync: false
       - key: CLINIC_TIMEZONE # zona IANA de la clínica
@@ -38,8 +36,3 @@ services:
         value: Clínica Demo SIGO (ficticia)
       - key: MESSAGING_PROVIDER
         value: simulated
-  - type: keyvalue
-    name: sigo-redis
-    plan: free
-    maxmemoryPolicy: allkeys-lru
-    ipAllowList: []          # sólo accesible desde la red privada de Render
