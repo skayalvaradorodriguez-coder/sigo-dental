@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"sigo-backend/domain"
 	"sigo-backend/models"
 	"sigo-backend/notificaciones"
 
@@ -140,6 +141,7 @@ type DBRepository interface {
 	ActualizarPaciente(ctx context.Context, id string, d DatosPaciente, tutor *models.Tutor, tutorAccion string) error
 	HistorialAnamnesis(ctx context.Context, pacienteID string) ([]models.Anamnesis, error)
 	AgregarAnamnesis(ctx context.Context, pacienteID string, a models.Anamnesis, usuarioID string) (*models.Anamnesis, error)
+	AnamnesisVigentes(ctx context.Context, ids []string) (map[string]*models.Anamnesis, error)
 	ContactoPaciente(ctx context.Context, id string) (*DatosContacto, error)
 	ResumenAlertas(ctx context.Context, ids []string) (map[string][]string, map[string]bool, error)
 	ConteoPacientes(ctx context.Context) (int, int, error)
@@ -171,6 +173,31 @@ type DBRepository interface {
 	PacienteDeRealizado(ctx context.Context, id string) (string, error)
 	AgregarAdendaRealizado(ctx context.Context, realizadoID, autorID, texto string, creadoEn time.Time, hash string) error
 	CitaDelPaciente(ctx context.Context, citaID, pacienteID string) (bool, error)
+	// Etapa 4 — presupuestos, tareas, consentimientos, recetas y archivos
+	PresupuestosPaciente(ctx context.Context, pacienteID string) ([]models.Presupuesto, error)
+	PresupuestosPorEstado(ctx context.Context, estado string) ([]models.Presupuesto, error)
+	PresupuestoPorID(ctx context.Context, id string) (*models.Presupuesto, error)
+	CrearPresupuesto(ctx context.Context, pacienteID, odontologoID, titulo string, obs *string, items []ItemNuevo) (string, error)
+	ReemplazarBorrador(ctx context.Context, id, titulo string, obs *string, items []ItemNuevo) error
+	AutorizarDescuentos(ctx context.Context, id string, itemIDs []string, usuarioID string) error
+	PresentarPresupuesto(ctx context.Context, id, hash string) error
+	DecidirPresupuesto(ctx context.Context, id string, decisiones map[string]string, estado, usuarioID string, nota *string) error
+	TareasPaciente(ctx context.Context, pacienteID string) ([]models.Tarea, error)
+	TareaPorID(ctx context.Context, id string) (*models.Tarea, string, error)
+	PlantillasVigentes(ctx context.Context) ([]models.PlantillaConsentimiento, error)
+	PlantillaPorID(ctx context.Context, id string) (*models.PlantillaConsentimiento, error)
+	NuevaVersionPlantilla(ctx context.Context, codigo, titulo, texto string, procedimientoID *string, usuarioID string) (string, error)
+	ConsentimientosPaciente(ctx context.Context, pacienteID string) ([]models.Consentimiento, error)
+	ConsentimientosRecientes(ctx context.Context, estado string) ([]models.Consentimiento, error)
+	ConsentimientoPorID(ctx context.Context, id string) (*models.Consentimiento, error)
+	CrearConsentimiento(ctx context.Context, n NuevoConsentimiento) (string, error)
+	SumarIntentoOTP(ctx context.Context, id string) (int, error)
+	FirmarConsentimiento(ctx context.Context, id string, firmado time.Time, hash string) error
+	CrearReceta(ctx context.Context, pacienteID, odontologoID string, indicaciones *string, alertas []domain.AlertaReceta, items []models.RecetaItem, emitida time.Time, hash string) (string, error)
+	RecetasPaciente(ctx context.Context, pacienteID string) ([]models.Receta, error)
+	RegistrarArchivo(ctx context.Context, a models.Archivo, usuarioID string) (string, error)
+	ArchivosPaciente(ctx context.Context, pacienteID string) ([]models.Archivo, error)
+	ArchivoPorID(ctx context.Context, id string) (*models.Archivo, error)
 }
 
 var _ DBRepository = (*Postgres)(nil)

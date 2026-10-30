@@ -18,10 +18,11 @@ type DefAjuste struct {
 }
 
 const (
-	AjusteInactividad  = "seguridad.minutosInactividad"
-	AjusteBloqueoNotas = "clinica.horasBloqueoNotas"
-	AjusteMaxIntentos  = "seguridad.maxIntentosFallidos"
-	AjusteMinBloqueo   = "seguridad.minutosBloqueo"
+	AjusteInactividad   = "seguridad.minutosInactividad"
+	AjusteBloqueoNotas  = "clinica.horasBloqueoNotas"
+	AjusteMaxIntentos   = "seguridad.maxIntentosFallidos"
+	AjusteMinBloqueo    = "seguridad.minutosBloqueo"
+	AjusteTopeDescuento = "presupuestos.topeDescuento"
 )
 
 var DefsAjustes = []DefAjuste{
@@ -29,6 +30,7 @@ var DefsAjustes = []DefAjuste{
 	{AjusteBloqueoNotas, "Bloqueo de notas SOEP (horas)", "RF-05: plazo tras el cual una nota no puede editarse (por defecto 24).", 1, 72, 24},
 	{AjusteMaxIntentos, "Intentos fallidos antes de bloquear la cuenta", "Supuesto S-10 (el SRS no lo especifica).", 3, 10, 5},
 	{AjusteMinBloqueo, "Duración del bloqueo de cuenta (minutos)", "Supuesto S-10.", 5, 120, 15},
+	{AjusteTopeDescuento, "Tope de descuento sin autorización (% del honorario)", "RF-07 / S-25: por encima de este porcentaje, el descuento debe autorizarlo otra persona con su código MFA.", 0, 100, 10},
 }
 
 func DefAjustePor(clave string) (DefAjuste, bool) {

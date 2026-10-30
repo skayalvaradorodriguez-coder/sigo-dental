@@ -116,6 +116,7 @@ type citaIn struct {
 	Inicio          string `json:"inicio"`
 	DuracionMin     int    `json:"duracionMin"`
 	Motivo          string `json:"motivo"`
+	TareaID         string `json:"tareaId"` // tarea de un presupuesto aprobado (RF-08)
 }
 
 // CrearCita — POST /api/citas. 409 SILLON_OCUPADO si el sillón está ocupado (RN-03).
@@ -129,12 +130,31 @@ func (h *Controllers) CrearCita(c *fiber.Ctx) error {
 	errs.UUID("odontologoId", in.OdontologoID, true)
 	errs.UUID("sillonId", in.SillonID, true)
 	errs.UUID("procedimientoId", in.ProcedimientoID, false)
+	errs.UUID("tareaId", in.TareaID, false)
 	errs.Longitud("motivo", in.Motivo, 0, 300, "Motivo: hasta 300 caracteres.")
 	inicio, fin := h.validarHorario(errs, in.Inicio, in.DuracionMin)
 	if !errs.Ok() {
 		return errValidacion(c, errs)
 	}
 	ctx := c.UserContext()
+	var tarea *string
+	if in.TareaID != "" {
+		t, msg, err := h.tareaDelPaciente(c, in.TareaID, in.PacienteID, true)
+		if err != nil {
+			return h.errorInterno(c, err)
+		}
+		if msg != "" {
+			errs.Agregar("tareaId", msg)
+			return errValidacion(c, errs)
+		}
+		if in.ProcedimientoID == "" {
+			in.ProcedimientoID = t.ProcedimientoID
+		} else if in.ProcedimientoID != t.ProcedimientoID {
+			errs.Agregar("procedimientoId", "El procedimiento no coincide con el de la tarea.")
+			return errValidacion(c, errs)
+		}
+		tarea = &in.TareaID
+	}
 	proc := validacion.Opcional(in.ProcedimientoID)
 	if err := h.validarReferencias(ctx, errs, in.OdontologoID, in.SillonID, proc); err != nil {
 		return h.errorInterno(c, err)
@@ -152,7 +172,11 @@ func (h *Controllers) CrearCita(c *fiber.Ctx) error {
 		return responder(c, errSillonOcupado(conf))
 	}
 	id, err := h.Repo.CrearCita(ctx, repository.NuevaCita{PacienteID: in.PacienteID, OdontologoID: in.OdontologoID, SillonID: in.SillonID,
-		ProcedimientoID: proc, Motivo: validacion.Opcional(in.Motivo), Inicio: inicio, Fin: fin, CreadoPor: middleware.Actual(c).Usuario.ID}, msgs)
+		ProcedimientoID: proc, Motivo: validacion.Opcional(in.Motivo), Inicio: inicio, Fin: fin, CreadoPor: middleware.Actual(c).Usuario.ID,
+		TareaID: tarea}, msgs)
+	if errors.Is(err, repository.ErrDuplicado) && tarea != nil {
+		return responder(c, models.NewAPIError(409, "TAREA_YA_AGENDADA", "Esa tarea ya tiene una cita activa."))
+	}
 	if errors.Is(err, repository.ErrSuperposicion) {
 		// Dos recepcionistas agendando a la vez: la BD dejó pasar sólo a una (RN-03).
 		return responder(c, errSillonOcupado(nil))
@@ -161,7 +185,7 @@ func (h *Controllers) CrearCita(c *fiber.Ctx) error {
 		return h.errorRepo(c, err, "", "")
 	}
 	h.Auditar(c, repository.Evento{Accion: "CREACION", Entidad: "cita", EntidadID: id,
-		Detalle: map[string]any{"pacienteId": in.PacienteID, "sillonId": in.SillonID, "inicio": inicio.UTC().Format(time.RFC3339)}})
+		Detalle: map[string]any{"pacienteId": in.PacienteID, "sillonId": in.SillonID, "inicio": inicio.UTC().Format(time.RFC3339), "tareaId": in.TareaID}})
 	ci, err := h.Repo.CitaPorID(ctx, id)
 	if err != nil {
 		return h.errorInterno(c, err)

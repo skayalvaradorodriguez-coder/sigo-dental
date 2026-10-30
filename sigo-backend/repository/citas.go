@@ -156,6 +156,7 @@ func (r *Postgres) BuscarSuperposicion(ctx context.Context, sillonID string, ini
 type NuevaCita struct {
 	PacienteID, OdontologoID, SillonID string
 	ProcedimientoID, Motivo            *string
+	TareaID                            *string // tarea agendable de un presupuesto aprobado (RF-08)
 	Inicio, Fin                        time.Time
 	CreadoPor                          string
 }
@@ -179,9 +180,9 @@ func (r *Postgres) CrearCita(ctx context.Context, n NuevaCita, msgs []notificaci
 	}
 	defer tx.Rollback(ctx) //nolint:errcheck
 	var id string
-	if err := tx.QueryRow(ctx, `INSERT INTO citas (paciente_id, odontologo_id, sillon_id, procedimiento_id, inicio, fin, motivo, creado_por)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`, n.PacienteID, n.OdontologoID, n.SillonID, n.ProcedimientoID,
-		n.Inicio, n.Fin, n.Motivo, n.CreadoPor).Scan(&id); err != nil {
+	if err := tx.QueryRow(ctx, `INSERT INTO citas (paciente_id, odontologo_id, sillon_id, procedimiento_id, inicio, fin, motivo, creado_por, tarea_id)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`, n.PacienteID, n.OdontologoID, n.SillonID, n.ProcedimientoID,
+		n.Inicio, n.Fin, n.Motivo, n.CreadoPor, n.TareaID).Scan(&id); err != nil {
 		return "", traducir(err)
 	}
 	if _, err := tx.Exec(ctx, `INSERT INTO citas_eventos (cita_id, estado_nuevo, usuario_id) VALUES ($1,'PROGRAMADO',$2)`, id, n.CreadoPor); err != nil {
