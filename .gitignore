@@ -1,0 +1,31 @@
+# Dependencias y compilados del frontend
+node_modules
+dist
+dist-ssr
+dev-dist
+*.local
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Variables de entorno locales (nunca se suben). Sí se suben los .env.example y sigo-backend/.env.test (sin secretos reales).
+.env
+sigo-backend/.env
+
+# Backend en Go: binarios y cobertura
+sigo-backend/sigo-backend
+sigo-backend/sigo-backend.exe
+sigo-backend/*.exe
+sigo-backend/tmp/
+*.out
+cobertura.html
+
+# Editor y sistema
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+Thumbs.db
+*.sw?

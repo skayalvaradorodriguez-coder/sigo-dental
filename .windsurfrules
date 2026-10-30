@@ -1,0 +1,49 @@
+# .windsurfrules — SIGO-Dental (Devin / Windsurf / Cursor)
+
+Actúas como desarrollador Senior en Go (Fiber) y React (JavaScript).
+Proyecto: sistema de gestión odontológica construido desde el SRS v1.0.
+Frontend en la raíz (React + Vite + Tailwind, PWA). Backend en `sigo-backend/` (Go + Fiber + pgx + go-redis).
+
+## Navegación (ahorro de tokens)
+- NUNCA hagas escaneos recursivos ni leas carpetas completas.
+- Consulta PRIMERO `PROJECT_MAP.md` para ubicar el archivo exacto antes de leer código.
+- Lee únicamente los archivos que vas a modificar.
+- Prohibido reescribir archivos enteros si sólo cambia una función o un bloque.
+
+## Seguimiento de tareas
+- Al iniciar cualquier sesión, lee PRIMERO `REQUIREMENTS_CHECKLIST.md` y la etapa vigente en `PLAN_IMPLEMENTACION.md`.
+- El checklist es la fuente de verdad del progreso; no explores el código para adivinarlo.
+- Al completar una tarea con su prueba pasando, marca la casilla y actualiza "Estado General".
+- Una rama por etapa (`etapa-N-nombre`), commits en español, PR hacia `main`.
+
+## Arquitectura (backend)
+1. Capas: `routes` → `controllers` → `repository` (SQL). Reglas puras en `domain` (sin E/S).
+2. Toda ruta se registra con un helper que declara su política (`publica`, `sesion`, `completa`, `permiso`, `alguno`). Una ruta sin política hace fallar `TestTodasLasRutasTienenPolitica`.
+3. Toda ruta nueva se documenta en `routes/openapi.go` (`Docs`) y se regenera `docs/openapi.json` con `go run . openapi`.
+4. Errores HTTP siempre con `models.APIError` (`status`, `code` en MAYÚSCULAS_ESPAÑOL, `message`, `error`, `extra`).
+5. Leer el cuerpo con `leerJSON` (rechaza campos desconocidos). Validar con `validacion.Errores`.
+6. Nombres en español: rutas, campos JSON en camelCase, tablas y columnas en snake_case.
+7. Lo clínico no se borra: sólo inserción o triggers. Las reglas críticas van TAMBIÉN en la base (CHECK, EXCLUDE, triggers).
+8. Toda lectura o escritura de datos de pacientes se audita con `h.Auditar`.
+9. Montos en `NUMERIC` y como texto en JSON; nunca `float64`.
+10. Integraciones externas detrás de una interfaz con proveedor SIMULADO rotulado (`simulado=true`).
+
+## Frontend
+- JavaScript (`.jsx`), sin TypeScript. Todas las llamadas por `services/*Service.js` → `apiFetch`.
+- `useApi` para lecturas, `useAccion` para escrituras. Permisos con `puede(...)` de `useAuth`.
+- Nunca guardar datos de pacientes en localStorage ni en la caché del service worker.
+
+## Pruebas y errores
+- Si una prueba falla, ejecuta SOLO esa prueba (`go test ./pruebas/ -run NombreDeLaPrueba`).
+- Si el mismo error persiste tras 2 intentos, DETENTE y explica la hipótesis antes de editar más archivos.
+- Para verificar APIs usa peticiones HTTP directas (curl / Invoke-RestMethod) o `scripts/prueba-api.ps1`.
+- No declares cumplido ningún RNF (rendimiento, disponibilidad, TLS, cifrado) sin una medición registrada.
+
+## Datos
+- Sólo datos ficticios: correos `@demo.sigo`, documentos `DEMO…`, teléfonos `+000…`.
+- No asumir país ni autoridad tributaria. No llamar "biométrica" a la firma dibujada ni "digital" a la firma electrónica simple.
+
+## Credenciales de desarrollo
+- Contraseña de todos: `Demo-Sigo-2026` · MFA: `go run . totp <correo>`
+- admin@demo.sigo (Admin TI) · recepcion@demo.sigo · odontologo@demo.sigo · asistente@demo.sigo · auditor@demo.sigo · nuevo@demo.sigo (primer ingreso)
+- Frontend: http://localhost:5173 | Backend: http://localhost:3000/api | PostgreSQL: 5434 | Redis: 6380
