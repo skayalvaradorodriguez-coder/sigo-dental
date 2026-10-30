@@ -139,7 +139,10 @@ func TestMovimientosYConfiguracion(t *testing.T) {
 		t.Errorf("una transferencia con una sola pata no se confirma: %v", err)
 	}
 
-	// Insumos y recetas: sólo el Auditor (inventario.configurar).
+	// Ubicaciones, insumos y recetas: sólo el Auditor (inventario.configurar).
+	espera(t, llamar(t, "POST", "/api/inventario/ubicaciones", asis, map[string]any{"nombre": "Bodega 2"}), 403, "el asistente no crea ubicaciones")
+	espera(t, llamar(t, "POST", "/api/inventario/ubicaciones", aud, map[string]any{"nombre": "Bodega central"}), 409, "nombre repetido")
+	espera(t, llamar(t, "POST", "/api/inventario/ubicaciones", aud, map[string]any{"nombre": "Bodega de esterilización"}), 201, "nueva ubicación")
 	nuevo := map[string]any{"codigo": "FLU-01", "nombre": "Barniz de flúor", "unidad": "ml", "costoUnitario": "0.95", "stockMinimo": "10"}
 	espera(t, llamar(t, "POST", "/api/inventario/insumos", asis, nuevo), 403, "el asistente no crea insumos")
 	espera(t, llamar(t, "POST", "/api/inventario/insumos", aud, map[string]any{"codigo": "x", "nombre": "", "unidad": "", "costoUnitario": "1.23456"}), 400, "validación")

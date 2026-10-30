@@ -19,7 +19,7 @@ export default defineConfig(({ mode }) => {
   return {
     server: { host: true, proxy, allowedHosts },
     preview: { host: true, proxy, allowedHosts },
-    test: { environment: "jsdom", setupFiles: ["./src/pruebas/setup.js"], css: false },
+    test: { environment: "jsdom", setupFiles: ["./src/pruebas/setup.js"], css: false, include: ["src/**/*.test.{js,jsx}"] },
     plugins: [
       react(),
       tailwindcss(),
