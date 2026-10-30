@@ -5,17 +5,22 @@ services:
   - type: web
     name: sigo-dental
     runtime: docker
-    plan: starter            # el plan gratuito "duerme" y no admite disco persistente
+    # Demostración académica en el plan gratuito: se duerme tras 15 min sin uso (~1 min en despertar)
+    # y no tiene disco persistente (los archivos subidos se pierden al reiniciar). Para una clínica real:
+    # plan starter, APP_ENV=prod y el disco comentado abajo (DESPLIEGUE.md §3).
+    plan: free
     region: oregon
     healthCheckPath: /api/health
     autoDeploy: false        # se despliega a mano tras revisar la integración continua
-    disk:                    # radiografías y documentos (ARCHIVOS_DIR). Ver DESPLIEGUE.md §5.
-      name: archivos
-      mountPath: /data/archivos
-      sizeGB: 5
+    # disk:                  # radiografías y documentos (ARCHIVOS_DIR); sólo en planes de pago
+    #   name: archivos
+    #   mountPath: /data/archivos
+    #   sizeGB: 5
     envVars:
-      - key: APP_ENV
-        value: prod
+      - key: APP_ENV         # demo = seguridad de producción + datos ficticios y aviso en pantalla
+        value: demo
+      - key: ARCHIVOS_DIR    # sin disco persistente en el plan gratuito
+        value: /tmp/archivos
       - key: DATABASE_URL    # Neon: postgres://...neon.tech/sigo?sslmode=require
         sync: false
       - key: JWT_SECRET
@@ -27,10 +32,10 @@ services:
           property: hostport
       - key: WEB_ORIGIN      # https://<su-servicio>.onrender.com o el dominio propio
         sync: false
-      - key: CLINIC_TIMEZONE # zona IANA de la clínica, p. ej. America/Guayaquil
-        sync: false
+      - key: CLINIC_TIMEZONE # zona IANA de la clínica
+        value: America/Guayaquil
       - key: CLINIC_NAME
-        sync: false
+        value: Clínica Demo SIGO (ficticia)
       - key: MESSAGING_PROVIDER
         value: simulated
   - type: keyvalue

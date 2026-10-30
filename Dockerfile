@@ -32,5 +32,6 @@ ENV APP_ENV=prod STATIC_DIR=/app/dist ARCHIVOS_DIR=/data/archivos PORT=8080 NOTI
 USER sigo
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s CMD wget -qO- http://127.0.0.1:8080/api/health || exit 1
-# Aplica las migraciones pendientes (idempotentes) y arranca.
-CMD ["sh", "-c", "./sigo-api migrar && exec ./sigo-api"]
+# Aplica las migraciones pendientes (idempotentes) y arranca. Con APP_ENV=demo carga además los datos
+# ficticios (la semilla no duplica lo que ya existe) y el paciente de volumen VOL000001 (RNF-01).
+CMD ["sh", "-c", "./sigo-api migrar && if [ \"$APP_ENV\" = demo ]; then ./sigo-api semilla && ./sigo-api volumen; fi && exec ./sigo-api"]

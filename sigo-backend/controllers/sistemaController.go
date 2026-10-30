@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -12,6 +13,7 @@ import (
 	"sigo-backend/middleware"
 	"sigo-backend/permisos"
 	"sigo-backend/repository"
+	"sigo-backend/seguridad"
 	"sigo-backend/validacion"
 )
 
@@ -26,7 +28,23 @@ func (h *Controllers) Health(c *fiber.Ctx) error {
 	if h.Cache.Ping(ctx) != nil {
 		redis, estado = "sin conexión", "degraded"
 	}
-	return c.JSON(fiber.Map{"status": estado, "db": "ok", "redis": redis, "hora": time.Now().UTC().Format(time.RFC3339)})
+	r := fiber.Map{"status": estado, "db": "ok", "redis": redis, "hora": time.Now().UTC().Format(time.RFC3339)}
+	if h.Cfg.EsDemo() {
+		r["demo"] = true // la PWA muestra el aviso "datos ficticios"
+	}
+	return c.JSON(r)
+}
+
+// CodigoDemo — GET /api/demo/mfa (sólo con APP_ENV=demo, tras la contraseña): código MFA vigente
+// del propio usuario de demostración (@demo.sigo), para que los evaluadores puedan ingresar sin
+// configurar una app autenticadora. Nunca existe en producción.
+func (h *Controllers) CodigoDemo(c *fiber.Ctx) error {
+	u := middleware.Actual(c).Usuario
+	if !h.Cfg.EsDemo() || !strings.HasSuffix(u.Email, "@demo.sigo") || !u.MFAActivo || u.MFASecreto == nil {
+		return c.SendStatus(404)
+	}
+	ahora := time.Now()
+	return c.JSON(fiber.Map{"codigo": seguridad.CodigoTOTP(*u.MFASecreto, ahora), "segundos": seguridad.PeriodoTOTP - ahora.Unix()%seguridad.PeriodoTOTP})
 }
 
 // ListarAjustes — GET /api/ajustes

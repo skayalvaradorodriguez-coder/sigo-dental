@@ -14,7 +14,7 @@ import (
 
 type Config struct {
 	Puerto              string
-	Entorno             string // dev | test | prod
+	Entorno             string // dev | test | prod | demo (producción con datos ficticios)
 	DatabaseURL         string
 	JWTSecret           string
 	SesionMaxima        time.Duration // duración absoluta máxima de una sesión
@@ -32,7 +32,11 @@ type Config struct {
 	StaticDir           string        // carpeta de la build del frontend (producción)
 }
 
-func (c Config) EsProduccion() bool { return c.Entorno == "prod" }
+// EsProduccion: postura de seguridad de producción (TLS, HSTS, secretos propios). También en "demo".
+func (c Config) EsProduccion() bool { return c.Entorno == "prod" || c.Entorno == "demo" }
+
+// EsDemo: despliegue público de demostración con datos ficticios (semilla y código MFA de prueba).
+func (c Config) EsDemo() bool { return c.Entorno == "demo" }
 
 func env(clave, defecto string) string {
 	if v := strings.TrimSpace(os.Getenv(clave)); v != "" {
@@ -99,11 +103,11 @@ func Cargar(archivos ...string) (Config, error) {
 		errs = append(errs, `MESSAGING_PROVIDER: sólo "simulated" está implementado`)
 	}
 	switch c.Entorno {
-	case "dev", "test", "prod":
+	case "dev", "test", "prod", "demo":
 	default:
-		errs = append(errs, "APP_ENV debe ser dev, test o prod")
+		errs = append(errs, "APP_ENV debe ser dev, test, prod o demo")
 	}
-	if c.Entorno == "prod" {
+	if c.EsProduccion() {
 		// RNF-04: en producción la conexión a la base debe ir cifrada (TLS) y los secretos no pueden
 		// ser los de ejemplo.
 		if !strings.Contains(c.DatabaseURL, "sslmode=require") && !strings.Contains(c.DatabaseURL, "sslmode=verify") {

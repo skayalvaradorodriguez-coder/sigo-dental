@@ -98,7 +98,7 @@ func ejecutarComando(ctx context.Context, cfg config.Config, pool *pgxpool.Pool,
 			fmt.Println("✔ Aplicada", a)
 		}
 	case "semilla":
-		if cfg.EsProduccion() {
+		if cfg.EsProduccion() && !cfg.EsDemo() {
 			log.Fatal("La semilla de demostración no se ejecuta en producción.")
 		}
 		reset := len(args) > 1 && args[1] == "--reset-usuarios"
@@ -116,7 +116,7 @@ func ejecutarComando(ctx context.Context, cfg config.Config, pool *pgxpool.Pool,
 		fmt.Println("  Contraseña:", semilla.PasswordDemo)
 		fmt.Println("  Código MFA:  go run . totp <correo>")
 	case "totp":
-		if cfg.EsProduccion() {
+		if cfg.EsProduccion() && !cfg.EsDemo() {
 			log.Fatal("No disponible en producción.")
 		}
 		if len(args) < 2 {
@@ -165,7 +165,7 @@ func ejecutarComando(ctx context.Context, cfg config.Config, pool *pgxpool.Pool,
 		}
 		fmt.Println(tok)
 	case "volumen", "medir", "carga":
-		if cfg.EsProduccion() {
+		if cfg.EsProduccion() && !(cfg.EsDemo() && args[0] == "volumen") {
 			log.Fatal("Las herramientas de medición no se ejecutan en producción.")
 		}
 		base := "http://localhost:" + cfg.Puerto
