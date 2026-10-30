@@ -132,6 +132,31 @@ func NuevaApp(h *controllers.Controllers) (*fiber.App, []Registro) {
 	e.permiso("GET", "/auditoria", p(permisos.AuditoriaLeer), h.ListarAuditoria)
 	e.permiso("POST", "/auditoria/verificar", p(permisos.AuditoriaLeer), h.VerificarAuditoria)
 
+	// ---------------------------------------------------------------- Etapa 2
+	lectoresCatalogo := p(permisos.CatalogosGestionar, permisos.CitasLeer, permisos.PacientesLeer)
+	e.alguno("GET", "/catalogos/estructura", lectoresCatalogo, h.Estructura)
+	e.alguno("GET", "/catalogos/sillones", lectoresCatalogo, h.Sillones)
+	e.alguno("GET", "/catalogos/procedimientos", lectoresCatalogo, h.ListarProcedimientos)
+	e.alguno("GET", "/catalogos/convenios", lectoresCatalogo, h.ListarConvenios)
+	e.alguno("GET", "/catalogos/odontologos", lectoresCatalogo, h.ListarOdontologos)
+	e.permiso("POST", "/catalogos/:tipo", p(permisos.CatalogosGestionar), h.CrearCatalogo)
+	e.permiso("PATCH", "/catalogos/:tipo/:id", p(permisos.CatalogosGestionar), h.ActualizarCatalogo)
+
+	e.permiso("GET", "/pacientes", p(permisos.PacientesLeer), h.ListarPacientes)
+	e.permiso("GET", "/pacientes/:id", p(permisos.PacientesLeer), h.ObtenerPaciente)
+	e.permiso("POST", "/pacientes", p(permisos.PacientesEscribir), h.CrearPaciente)
+	e.permiso("PUT", "/pacientes/:id", p(permisos.PacientesEscribir), h.ActualizarPaciente)
+	e.alguno("GET", "/pacientes/:id/anamnesis", p(permisos.ClinicaLeer, permisos.AnamnesisEscribir), h.HistorialAnamnesis)
+	e.permiso("POST", "/pacientes/:id/anamnesis", p(permisos.AnamnesisEscribir), h.AgregarAnamnesis)
+
+	e.permiso("GET", "/citas", p(permisos.CitasLeer), h.ListarCitas)
+	e.permiso("GET", "/citas/:id", p(permisos.CitasLeer), h.ObtenerCita)
+	e.permiso("POST", "/citas", p(permisos.CitasEscribir), h.CrearCita)
+	e.permiso("PATCH", "/citas/:id/reprogramar", p(permisos.CitasEscribir), h.ReprogramarCita)
+	e.permiso("POST", "/citas/:id/estado", p(permisos.CitasEscribir), h.CambiarEstadoCita)
+	e.permiso("GET", "/notificaciones", p(permisos.CitasLeer), h.Bandeja)
+	e.permiso("POST", "/notificaciones/procesar", p(permisos.CitasEscribir), h.Procesar)
+
 	// Cualquier otra ruta /api → 404 JSON.
 	app.Use("/api", func(c *fiber.Ctx) error {
 		return c.Status(404).JSON(models.NewAPIError(404, "NO_ENCONTRADO", "Recurso no encontrado."))

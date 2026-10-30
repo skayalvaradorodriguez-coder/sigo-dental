@@ -14,6 +14,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -23,6 +24,7 @@ import (
 	"sigo-backend/config"
 	"sigo-backend/controllers"
 	"sigo-backend/database"
+	"sigo-backend/notificaciones"
 	"sigo-backend/repository"
 	"sigo-backend/routes"
 	"sigo-backend/seguridad"
@@ -54,20 +56,29 @@ func main() {
 	// Inyección de dependencias: interfaces en los bordes, implementaciones aquí.
 	repo := repository.NuevoPostgres(pool)
 	redis := cache.NuevaRedisCache(config.ConectarRedis(cfg.RedisAddr, cfg.RedisPass))
-	ctl := controllers.NewControllers(repo, redis, cfg)
+	despachador := &notificaciones.Despachador{Proveedor: &notificaciones.Simulada{}, Clinica: cfg.NombreClinica, Zona: cfg.ZonaHoraria}
+	ctl := controllers.NewControllers(repo, redis, cfg, despachador)
 	app, _ := routes.NuevaApp(ctl)
+
+	// Goroutine de recordatorios con apagado ordenado (WaitGroup).
+	ctxBg, cancelar := context.WithCancel(ctx)
+	var wg sync.WaitGroup
+	despachador.Iniciar(ctxBg, &wg, cfg.DespachoCada, ctl.ProcesarNotificaciones)
 
 	go func() {
 		sig := make(chan os.Signal, 1)
 		signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
 		<-sig
 		log.Println("Apagando…")
+		cancelar()
 		_ = app.ShutdownWithTimeout(10 * time.Second)
 	}()
 	log.Printf("SIGO-Dental API en http://localhost:%s/api (entorno %s, zona %s)", cfg.Puerto, cfg.Entorno, cfg.NombreZona)
 	if err := app.Listen(":" + cfg.Puerto); err != nil {
 		log.Println(err)
 	}
+	cancelar()
+	wg.Wait()
 }
 
 func ejecutarComando(ctx context.Context, cfg config.Config, pool *pgxpool.Pool, args []string) {
@@ -121,7 +132,7 @@ func ejecutarComando(ctx context.Context, cfg config.Config, pool *pgxpool.Pool,
 
 // generarOpenAPI escribe ../docs/openapi.json a partir del registro real de rutas.
 func generarOpenAPI(cfg config.Config) {
-	_, registro := routes.NuevaApp(controllers.NewControllers(nil, nil, cfg))
+	_, registro := routes.NuevaApp(controllers.NewControllers(nil, nil, cfg, nil))
 	doc, err := routes.OpenAPI(registro)
 	if err != nil {
 		log.Fatal(err)
