@@ -56,3 +56,13 @@ export const fmtRelativo = (iso) => {
   if (seg < 86400) return rtf.format(-Math.round(seg / 3600), "hour");
   return rtf.format(-Math.round(seg / 86400), "day");
 };
+
+// Tiempo que falta hasta una fecha futura ("en 3 h", "en 25 min"); "ya" si pasó.
+export const fmtFaltan = (iso) => {
+  const seg = (new Date(iso).getTime() - Date.now()) / 1000;
+  if (seg <= 0) return "ya";
+  const rtf = new Intl.RelativeTimeFormat("es", { numeric: "auto" });
+  if (seg < 3600) return rtf.format(Math.ceil(seg / 60), "minute");
+  if (seg < 86400) return rtf.format(Math.round(seg / 3600), "hour");
+  return rtf.format(Math.round(seg / 86400), "day");
+};
