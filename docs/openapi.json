@@ -317,6 +317,454 @@
         "x-politica": "permisos:auditoria.leer"
       }
     },
+    "/api/caja/cierres": {
+      "get": {
+        "description": "Acceso: sesión completa + permiso caja.revisar.",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Auditor: sesiones con teórico, declarado y diferencia por medio (?estado=ABIERTA|CERRADA|REVISADA).",
+        "tags": [
+          "caja"
+        ],
+        "x-politica": "permisos:caja.revisar"
+      }
+    },
+    "/api/caja/cierres/{id}": {
+      "get": {
+        "description": "Acceso: sesión completa + permiso caja.revisar.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Auditor: conciliación de una sesión con sus cobros.",
+        "tags": [
+          "caja"
+        ],
+        "x-politica": "permisos:caja.revisar"
+      }
+    },
+    "/api/caja/cierres/{id}/revisar": {
+      "post": {
+        "description": "Acceso: sesión completa + permiso caja.revisar.\n\nCuerpo JSON: `{nota?}` (campos desconocidos ⇒ 400).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Auditor: marca el cierre como revisado; con diferencias fuera de tolerancia exige nota.",
+        "tags": [
+          "caja"
+        ],
+        "x-politica": "permisos:caja.revisar"
+      }
+    },
+    "/api/caja/cobros": {
+      "get": {
+        "description": "Acceso: sesión completa + permiso caja.operar.",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cobros de la caja abierta (cada uno con su total; sin sumas por medio).",
+        "tags": [
+          "caja"
+        ],
+        "x-politica": "permisos:caja.operar"
+      }
+    },
+    "/api/caja/cuentas-por-cobrar": {
+      "get": {
+        "description": "Acceso: sesión completa + permiso caja.revisar.",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Auditor: montos pagados con seguro pendientes de cobrar a cada aseguradora (S-06).",
+        "tags": [
+          "caja"
+        ],
+        "x-politica": "permisos:caja.revisar"
+      }
+    },
+    "/api/caja/sesion": {
+      "get": {
+        "description": "Acceso: sesión completa + permiso caja.operar.",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Caja abierta del recepcionista: apertura, fondo y cantidad de cobros. Nunca totales ni teórico (RN-02).",
+        "tags": [
+          "caja"
+        ],
+        "x-politica": "permisos:caja.operar"
+      },
+      "post": {
+        "description": "Acceso: sesión completa + permiso caja.operar.\n\nCuerpo JSON: `{fondoInicial}` (campos desconocidos ⇒ 400).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Abre la caja con el fondo inicial. Una sola abierta por recepcionista (409 CAJA_YA_ABIERTA).",
+        "tags": [
+          "caja"
+        ],
+        "x-politica": "permisos:caja.operar"
+      }
+    },
+    "/api/caja/sesion/cerrar": {
+      "post": {
+        "description": "Acceso: sesión completa + permiso caja.operar.\n\nCuerpo JSON: `{efectivo, tarjeta, transferencia, nota?}` (campos desconocidos ⇒ 400).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cierre ciego (RN-02): declara lo contado por medio; responde sólo la confirmación. El teórico se calcula y guarda en la misma transacción.",
+        "tags": [
+          "caja"
+        ],
+        "x-politica": "permisos:caja.operar"
+      }
+    },
     "/api/catalogos/convenios": {
       "get": {
         "description": "Acceso: sesión completa + alguno de: catalogos.gestionar, citas.leer, pacientes.leer.",
@@ -1023,6 +1471,256 @@
         "x-politica": "permisos:citas.escribir"
       }
     },
+    "/api/cobros": {
+      "post": {
+        "description": "Acceso: sesión completa + permiso caja.operar y facturacion.emitir.\n\nCuerpo JSON: `{pacienteId, conceptos[{procedimientoRealizadoId} | {procedimientoId}], pagos[{medio (EFECTIVO|TARJETA|TRANSFERENCIA|SEGURO), monto, referencia?, convenioId?}]}` (campos desconocidos ⇒ 400).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cobro con pago mixto (RF-12). Los montos los fija el sistema; los pagos deben sumar el total (400 PAGO_NO_CUADRA). Emite la factura con el proveedor SIMULADO.",
+        "tags": [
+          "cobros"
+        ],
+        "x-politica": "permisos:caja.operar+facturacion.emitir"
+      }
+    },
+    "/api/cobros/{id}": {
+      "get": {
+        "description": "Acceso: sesión completa + alguno de: caja.operar, caja.revisar.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Detalle del cobro: conceptos, pagos, anulación y todos los intentos de comprobante.",
+        "tags": [
+          "cobros"
+        ],
+        "x-politica": "alguno:caja.operar|caja.revisar"
+      }
+    },
+    "/api/cobros/{id}/anular": {
+      "post": {
+        "description": "Acceso: sesión completa + permiso caja.operar y facturacion.emitir.\n\nCuerpo JSON: `{motivo}` (campos desconocidos ⇒ 400).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Anula un cobro de la caja abierta propia (nunca se borra); con factura autorizada emite nota de crédito.",
+        "tags": [
+          "cobros"
+        ],
+        "x-politica": "permisos:caja.operar+facturacion.emitir"
+      }
+    },
+    "/api/cobros/{id}/comprobante": {
+      "post": {
+        "description": "Acceso: sesión completa + permiso facturacion.emitir.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reintenta la factura (o la nota de crédito) si el último intento no quedó autorizado.",
+        "tags": [
+          "cobros"
+        ],
+        "x-politica": "permisos:facturacion.emitir"
+      }
+    },
     "/api/consentimientos": {
       "get": {
         "description": "Acceso: sesión completa + permiso consentimientos.gestionar.",
@@ -1309,6 +2007,56 @@
           "consentimientos"
         ],
         "x-politica": "permisos:consentimientos.gestionar"
+      }
+    },
+    "/api/facturacion/proveedor": {
+      "get": {
+        "description": "Acceso: sesión completa + alguno de: caja.operar, caja.revisar.",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Proveedor de facturación en uso y si es SIMULADO.",
+        "tags": [
+          "facturacion"
+        ],
+        "x-politica": "alguno:caja.operar|caja.revisar"
       }
     },
     "/api/health": {
@@ -2493,6 +3241,66 @@
         "x-politica": "permisos:clinica.escribir"
       }
     },
+    "/api/pacientes/{id}/cobros": {
+      "get": {
+        "description": "Acceso: sesión completa + alguno de: caja.operar, caja.revisar.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Historial de cobros del paciente con comprobantes y anulaciones (lectura auditada).",
+        "tags": [
+          "pacientes"
+        ],
+        "x-politica": "alguno:caja.operar|caja.revisar"
+      }
+    },
     "/api/pacientes/{id}/consentimientos": {
       "get": {
         "description": "Acceso: sesión completa + alguno de: consentimientos.gestionar, clinica.leer.",
@@ -3073,6 +3881,66 @@
           "pacientes"
         ],
         "x-politica": "permisos:clinica.escribir"
+      }
+    },
+    "/api/pacientes/{id}/por-cobrar": {
+      "get": {
+        "description": "Acceso: sesión completa + permiso caja.operar.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Procedimientos realizados sin cobro vigente, con el monto del presupuesto aprobado o el arancel.",
+        "tags": [
+          "pacientes"
+        ],
+        "x-politica": "permisos:caja.operar"
       }
     },
     "/api/pacientes/{id}/presupuestos": {
