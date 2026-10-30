@@ -217,6 +217,40 @@ $lista = Espera (Api "GET" "/api/pacientes/$($ana.id)/procedimientos" $doc) 200 
 if ($lista) { Ok "$(@($lista).Count) registrados; no existe ninguna ruta para editarlos ni borrarlos (RN-01)" }
 
 # ---------------------------------------------------------------------------------------
+Titulo "7. Presupuestos, consentimientos y recetas (RF-06, RF-07, RF-08)"
+$procs = Espera (Api "GET" "/api/catalogos/procedimientos" $doc) 200 "Procedimientos del catálogo"
+$pro = @($procs | Where-Object { $_.codigo -eq "PRO-01" })[0]
+$res = @($procs | Where-Object { $_.codigo -eq "RES-01" })[0]
+$pres = Espera (Api "POST" "/api/pacientes/$($ana.id)/presupuestos" $doc @{ titulo = "Plan del script"; items = @(
+    @{ fase = 1; faseNombre = "Higiene"; sesion = 1; procedimientoId = $pro.id; honorario = "35.00" },
+    @{ fase = 2; faseNombre = "Operatoria"; sesion = 2; procedimientoId = $res.id; diente = 16; superficies = @("O"); honorario = "45.00"; costoLaboratorio = "5.50"; descuento = "2.00" }) }) 201 "Presupuesto en borrador"
+if ($pres) {
+    Ok "Total $($pres.totales.total) = honorarios $($pres.totales.honorarios) + laboratorio $($pres.totales.laboratorio) - descuentos $($pres.totales.descuentos)"
+    $pp = Espera (Api "POST" "/api/presupuestos/$($pres.id)/presentar" $doc) 200 "Presentado (se congela con hash)"
+    Espera (Api "PUT" "/api/presupuestos/$($pres.id)" $doc @{ titulo = "Otro"; items = @() }) 409 "Un presupuesto presentado NO se edita" | Out-Null
+    $dec = @(@{ itemId = $pp.items[0].id; aprobado = $true }, @{ itemId = $pp.items[1].id; aprobado = $false })
+    $d = Espera (Api "POST" "/api/presupuestos/$($pres.id)/decision" $rec @{ decisiones = $dec; nota = "Prueba del script" }) 200 "Recepción registra aprobación parcial"
+    if ($d) { Ok "Estado $($d.estado) · aprobado $($d.totales.aprobado)" }
+    $t = Espera (Api "GET" "/api/pacientes/$($ana.id)/tareas" $rec) 200 "Tareas agendables"
+    $deEste = @($t | Where-Object { $_.presupuestoId -eq $pres.id })
+    if ($deEste.Count -eq 1) { Ok "1 ítem aprobado => 1 tarea ($($deEste[0].procedimiento), $($deEste[0].estado))" } else { Falla "Se esperaba 1 tarea y hay $($deEste.Count)" }
+}
+$pls = Espera (Api "GET" "/api/consentimientos/plantillas" $doc) 200 "Plantillas de consentimiento"
+$gen = @($pls | Where-Object { $_.codigo -eq "GEN-01" })[0]
+$vp = Espera (Api "POST" "/api/pacientes/$($ana.id)/consentimientos/vista-previa" $doc @{ plantillaId = $gen.id }) 200 "Vista previa del texto exacto"
+if ($vp) {
+    $c = Espera (Api "POST" "/api/pacientes/$($ana.id)/consentimientos" $doc @{ plantillaId = $gen.id; metodo = "OTP"; hashDocumento = $vp.hashDocumento }) 201 "Consentimiento: código OTP enviado"
+    if ($c) {
+        Ok "Enviado a $($c.otpDestinatario) por el proveedor '$($c.otpProveedor)' (simulado: $($c.otpSimulado))"
+        Espera (Api "POST" "/api/consentimientos/$($c.id)/verificar-otp" $doc @{ codigo = "000000" }) 400 "Código incorrecto rechazado" | Out-Null
+        $f = Espera (Api "POST" "/api/consentimientos/$($c.id)/verificar-otp" $doc @{ codigo = $c.otpSimuladoCodigo }) 200 "Firmado con el código"
+        if ($f) { Ok "Estado $($f.estado) · íntegro: $($f.integro) · documento $($f.hashDocumento.Substring(0,16))…" }
+    }
+}
+$alerta = Espera (Api "POST" "/api/pacientes/$($ana.id)/recetas" $doc @{ items = @(@{ medicamento = "Amoxicilina"; presentacion = "Cápsulas 500 mg"; dosis = "1"; via = "Oral"; frecuencia = "Cada 8 horas"; duracion = "7 días" }) }) 409 "Receta con amoxicilina a paciente alérgica a penicilina: alerta"
+if ($alerta) { Ok "$($alerta.code): $($alerta.extra.alertas[0].motivo)" }
+
+# ---------------------------------------------------------------------------------------
 Write-Host ""
 if ($script:fallas -eq 0) { Write-Host "TODO OK" -ForegroundColor Green; exit 0 }
 Write-Host "$($script:fallas) comprobación(es) fallaron" -ForegroundColor Red

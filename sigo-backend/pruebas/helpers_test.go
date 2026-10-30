@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http/httptest"
 	"os"
+	"sigo-backend/almacenamiento"
 	"strings"
 	"testing"
 	"time"
@@ -35,6 +36,7 @@ var (
 	registro []routes.Registro
 	pool     *pgxpool.Pool
 	ctl      *controllers.Controllers
+	almacen  = &almacenamiento.Memoria{}
 	simulada *notificaciones.Simulada
 	saltar   string
 )
@@ -73,6 +75,7 @@ func TestMain(m *testing.M) {
 	simulada = &notificaciones.Simulada{}
 	desp := &notificaciones.Despachador{Proveedor: simulada, Clinica: cfg.NombreClinica, Zona: cfg.ZonaHoraria}
 	ctl = controllers.NewControllers(repository.NuevoPostgres(pool), cache.NuevaRedisCache(config.ConectarRedis(cfg.RedisAddr, cfg.RedisPass, cfg.RedisDB)), cfg, desp)
+	ctl.Archivos = almacen
 	app, registro = routes.NuevaApp(ctl)
 	code := m.Run()
 	pool.Close()
