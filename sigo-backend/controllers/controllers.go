@@ -13,6 +13,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
+	"sigo-backend/almacenamiento"
 	"sigo-backend/cache"
 	"sigo-backend/config"
 	"sigo-backend/middleware"
@@ -28,6 +29,7 @@ type Controllers struct {
 	Cfg         config.Config
 	Despachador *notificaciones.Despachador
 	Ahora       func() time.Time // inyectable en pruebas
+	Archivos    almacenamiento.Almacen
 }
 
 func NewControllers(repo repository.DBRepository, c cache.CacheRepository, cfg config.Config, d *notificaciones.Despachador) *Controllers {
@@ -82,7 +84,14 @@ var ErrRespondido = errors.New("respuesta ya enviada")
 
 // leerJSON decodifica el cuerpo rechazando campos no declarados (evita asignación masiva,
 // p. ej. enviar "rol" en el login). Si falla, responde 400 y devuelve ErrRespondido.
+// MaxJSON: tamaño máximo de un cuerpo JSON (la subida de archivos tiene su propio límite).
+const MaxJSON = 1 << 20
+
 func leerJSON(c *fiber.Ctx, destino any) error {
+	if len(c.Body()) > MaxJSON {
+		_ = responder(c, models.NewAPIError(413, "CUERPO_DEMASIADO_GRANDE", "La petición supera 1 MB."))
+		return ErrRespondido
+	}
 	dec := json.NewDecoder(bytes.NewReader(c.Body()))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(destino); err != nil {

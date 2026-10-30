@@ -87,7 +87,7 @@ func manejadorErrores(c *fiber.Ctx, err error) error {
 
 // NuevaApp crea la aplicación con middlewares globales y todas las rutas.
 func NuevaApp(h *controllers.Controllers) (*fiber.App, []Registro) {
-	cfgFiber := fiber.Config{AppName: "SIGO-Dental API", ErrorHandler: manejadorErrores, BodyLimit: 2 * 1024 * 1024}
+	cfgFiber := fiber.Config{AppName: "SIGO-Dental API", ErrorHandler: manejadorErrores, BodyLimit: 11 * 1024 * 1024} // 10 MB de archivo + formulario; el JSON se limita a 1 MB en leerJSON
 	if h.Cfg.EsProduccion() {
 		cfgFiber.ProxyHeader = fiber.HeaderXForwardedFor // detrás de Render / proxy inverso
 	}
@@ -171,6 +171,34 @@ func NuevaApp(h *controllers.Controllers) (*fiber.App, []Registro) {
 	e.permiso("GET", "/pacientes/:id/procedimientos", p(permisos.ClinicaLeer), h.ListarRealizados)
 	e.permiso("POST", "/pacientes/:id/procedimientos", p(permisos.ClinicaFirmar), h.RegistrarRealizado)
 	e.permiso("POST", "/procedimientos-realizados/:id/adendas", p(permisos.ClinicaFirmar), h.AdendaRealizado)
+
+	// ---------------------------------------------------------------- Etapa 4
+	// Presupuestos (RF-07, RF-08) → tareas agendables.
+	e.permiso("GET", "/presupuestos", p(permisos.PresupuestosLeer), h.ListarPresupuestos)
+	e.permiso("GET", "/presupuestos/:id", p(permisos.PresupuestosLeer), h.ObtenerPresupuesto)
+	e.permiso("GET", "/pacientes/:id/presupuestos", p(permisos.PresupuestosLeer), h.ListarPresupuestosPaciente)
+	e.permiso("POST", "/pacientes/:id/presupuestos", p(permisos.PresupuestosEscribir), h.CrearPresupuesto)
+	e.permiso("PUT", "/presupuestos/:id", p(permisos.PresupuestosEscribir), h.ActualizarPresupuesto)
+	// Descuento sobre el tope: lo autoriza OTRO odontólogo (cuatro ojos) con su código MFA.
+	e.permiso("POST", "/presupuestos/:id/autorizar-descuentos", p(permisos.PresupuestosEscribir, permisos.ClinicaFirmar), h.AutorizarDescuentos)
+	e.permiso("POST", "/presupuestos/:id/presentar", p(permisos.PresupuestosEscribir), h.PresentarPresupuesto)
+	e.permiso("POST", "/presupuestos/:id/decision", p(permisos.PresupuestosAprobar), h.DecidirPresupuesto)
+	e.alguno("GET", "/pacientes/:id/tareas", p(permisos.CitasLeer, permisos.PresupuestosLeer), h.ListarTareas)
+	// Consentimientos (RF-06): firma manuscrita en pantalla u OTP.
+	e.alguno("GET", "/consentimientos/plantillas", p(permisos.ConsentimientosGestionar, permisos.CatalogosGestionar), h.ListarPlantillas)
+	e.permiso("POST", "/consentimientos/plantillas", p(permisos.CatalogosGestionar), h.CrearPlantilla)
+	e.permiso("GET", "/consentimientos", p(permisos.ConsentimientosGestionar), h.ListarConsentimientos)
+	e.permiso("GET", "/consentimientos/:id", p(permisos.ConsentimientosGestionar), h.ObtenerConsentimiento)
+	e.permiso("POST", "/consentimientos/:id/verificar-otp", p(permisos.ConsentimientosGestionar), h.VerificarOTPConsentimiento)
+	e.alguno("GET", "/pacientes/:id/consentimientos", p(permisos.ConsentimientosGestionar, permisos.ClinicaLeer), h.ListarConsentimientosPaciente)
+	e.permiso("POST", "/pacientes/:id/consentimientos/vista-previa", p(permisos.ConsentimientosGestionar), h.VistaPreviaConsentimiento)
+	e.permiso("POST", "/pacientes/:id/consentimientos", p(permisos.ConsentimientosGestionar), h.CrearConsentimiento)
+	// Recetas (propuesta P-01) y archivos adjuntos.
+	e.permiso("GET", "/pacientes/:id/recetas", p(permisos.ClinicaLeer), h.ListarRecetas)
+	e.permiso("POST", "/pacientes/:id/recetas", p(permisos.RecetasEscribir), h.CrearReceta)
+	e.permiso("GET", "/pacientes/:id/archivos", p(permisos.ClinicaLeer), h.ListarArchivos)
+	e.permiso("POST", "/pacientes/:id/archivos", p(permisos.ClinicaEscribir), h.SubirArchivo)
+	e.permiso("GET", "/archivos/:id/contenido", p(permisos.ClinicaLeer), h.DescargarArchivo)
 
 	// Cualquier otra ruta /api → 404 JSON.
 	app.Use("/api", func(c *fiber.Ctx) error {

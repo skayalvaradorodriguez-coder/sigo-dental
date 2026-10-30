@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"sigo-backend/almacenamiento"
 	"strings"
 	"sync"
 	"syscall"
@@ -58,6 +59,7 @@ func main() {
 	redis := cache.NuevaRedisCache(config.ConectarRedis(cfg.RedisAddr, cfg.RedisPass, cfg.RedisDB))
 	despachador := &notificaciones.Despachador{Proveedor: &notificaciones.Simulada{}, Clinica: cfg.NombreClinica, Zona: cfg.ZonaHoraria}
 	ctl := controllers.NewControllers(repo, redis, cfg, despachador)
+	ctl.Archivos = &almacenamiento.Local{Dir: cfg.ArchivosDir}
 	app, _ := routes.NuevaApp(ctl)
 
 	// Goroutine de recordatorios con apagado ordenado (WaitGroup).

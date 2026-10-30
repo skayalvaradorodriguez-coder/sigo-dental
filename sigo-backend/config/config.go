@@ -28,6 +28,7 @@ type Config struct {
 	NombreClinica       string
 	ProveedorMensajeria string
 	DespachoCada        time.Duration // 0 = despachador desactivado
+	ArchivosDir         string        // carpeta del almacenamiento local de archivos del paciente
 	StaticDir           string        // carpeta de la build del frontend (producción)
 }
 
@@ -60,6 +61,7 @@ func Cargar(archivos ...string) (Config, error) {
 		NombreClinica:       env("CLINIC_NAME", "Clínica Dental Demo"),
 		ProveedorMensajeria: env("MESSAGING_PROVIDER", "simulated"),
 		StaticDir:           os.Getenv("STATIC_DIR"),
+		ArchivosDir:         env("ARCHIVOS_DIR", "./archivos"),
 	}
 	// Base de datos: DATABASE_URL (nube) o DB_* (local), igual que en MultiCatálogo.
 	c.DatabaseURL = os.Getenv("DATABASE_URL")

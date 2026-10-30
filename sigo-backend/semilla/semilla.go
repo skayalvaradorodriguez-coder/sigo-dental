@@ -5,6 +5,9 @@
 //   - Clínica (Etapa 2): sólo si aún no hay sedes.
 //   - Expediente (Etapa 3): odontograma, periodontograma y una nota en borrador de Ana Torres,
 //     sólo si aún no hay registros de odontograma.
+//   - Planes (Etapa 4): plantillas de consentimiento (si no hay ninguna) y un presupuesto en
+//     borrador para Ana Torres (si no hay presupuestos). Textos de EJEMPLO, sin validez legal:
+//     cada clínica debe usar los que apruebe su asesoría jurídica.
 package semilla
 
 import (
@@ -71,7 +74,10 @@ func Cargar(ctx context.Context, pool *pgxpool.Pool, resetUsuarios bool, zona *t
 	if err := cargarClinica(ctx, pool, zona); err != nil {
 		return err
 	}
-	return cargarExpediente(ctx, pool)
+	if err := cargarExpediente(ctx, pool); err != nil {
+		return err
+	}
+	return cargarPlanes(ctx, pool)
 }
 
 func idUsuario(ctx context.Context, pool *pgxpool.Pool, email string) (id string) {
@@ -330,3 +336,91 @@ func cargarExpediente(ctx context.Context, pool *pgxpool.Pool) error {
 	}
 	return tx.Commit(ctx)
 }
+
+const pieConsentimiento = `
+
+Declaro que he leído (o me han leído) este documento, que pude hacer preguntas y que me fueron respondidas. Sé que puedo retirar este consentimiento antes del procedimiento.
+
+Firmante: {{firmante}} ({{relacion}}) — {{fecha}}.`
+
+var Plantillas = []struct{ Codigo, Titulo, Proc, Texto string }{
+	{"GEN-01", "Consentimiento general de atención odontológica", "",
+		`Yo, {{firmante}} ({{relacion}}), respecto de la atención de {{paciente}} ({{documento}}), autorizo a {{odontologo}} (registro {{registro}}) y al equipo de {{clinica}} a realizar la valoración, los exámenes y los tratamientos odontológicos de rutina que se me expliquen, incluido {{procedimiento}}.
+
+Me informaron que todo tratamiento puede tener molestias pasajeras (sensibilidad, inflamación, sangrado leve) y que es importante informar mis enfermedades, alergias y medicamentos. Me comprometo a seguir las indicaciones y a asistir a los controles.` + pieConsentimiento},
+	{"EXO-01", "Consentimiento para exodoncia (extracción dental)", "EXO-01",
+		`Yo, {{firmante}} ({{relacion}}), respecto de la atención de {{paciente}} ({{documento}}), autorizo a {{odontologo}} (registro {{registro}}) a realizar {{procedimiento}}.
+
+Me explicaron el motivo de la extracción, las alternativas y los riesgos: dolor e inflamación, sangrado, infección, alveolitis, lesión de dientes vecinos, comunicación con el seno maxilar (dientes superiores) y alteración temporal o permanente de la sensibilidad del labio o la lengua (dientes inferiores). Recibiré indicaciones escritas para después del procedimiento.` + pieConsentimiento},
+	{"END-01", "Consentimiento para endodoncia (tratamiento de conducto)", "END-01",
+		`Yo, {{firmante}} ({{relacion}}), respecto de la atención de {{paciente}} ({{documento}}), autorizo a {{odontologo}} (registro {{registro}}) a realizar {{procedimiento}}.
+
+Me explicaron que el tratamiento busca conservar el diente, que puede requerir varias sesiones y que el pronóstico no es seguro en todos los casos. Riesgos: dolor posoperatorio, fractura del instrumento o del diente, perforación, necesidad de retratamiento o de extracción. El diente tratado puede requerir una restauración o corona posterior.` + pieConsentimiento},
+}
+
+// cargarPlanes (Etapa 4): plantillas de consentimiento y un presupuesto demo en BORRADOR.
+func cargarPlanes(ctx context.Context, pool *pgxpool.Pool) error {
+	var n int
+	if err := pool.QueryRow(ctx, `SELECT count(*) FROM consentimiento_plantillas`).Scan(&n); err != nil {
+		return err
+	}
+	admin := idUsuario(ctx, pool, "admin@demo.sigo")
+	if n == 0 {
+		for _, p := range Plantillas {
+			var proc *string
+			if p.Proc != "" {
+				var id string
+				if err := pool.QueryRow(ctx, `SELECT id FROM procedimientos WHERE codigo=$1`, p.Proc).Scan(&id); err == nil {
+					proc = &id
+				}
+			}
+			if _, err := pool.Exec(ctx, `INSERT INTO consentimiento_plantillas (codigo, version, titulo, texto, procedimiento_id, creado_por)
+				VALUES ($1, 1, $2, $3, $4, NULLIF($5,'')::uuid)`, p.Codigo, p.Titulo, p.Texto, proc, admin); err != nil {
+				return err
+			}
+		}
+	}
+	if err := pool.QueryRow(ctx, `SELECT count(*) FROM presupuestos`).Scan(&n); err != nil || n > 0 {
+		return err
+	}
+	var paciente string
+	if err := pool.QueryRow(ctx, `SELECT id FROM pacientes WHERE numero_documento='DEMO000101'`).Scan(&paciente); err != nil {
+		return nil
+	}
+	valeria := idUsuario(ctx, pool, "odontologo@demo.sigo")
+	tx, err := pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	var pres string
+	if err := tx.QueryRow(ctx, `INSERT INTO presupuestos (paciente_id, odontologo_id, titulo, observaciones)
+		VALUES ($1,$2,'Plan de tratamiento integral (ejemplo)','Datos ficticios para la demostración.') RETURNING id`, paciente, valeria).Scan(&pres); err != nil {
+		return err
+	}
+	items := []struct {
+		fase      int
+		faseNom   string
+		sesion    int
+		proc      string
+		diente    *int
+		sups      []string
+		hon, desc string
+	}{
+		{1, "Higiene", 1, "PRO-01", nil, []string{}, "35.00", "0"},
+		{2, "Operatoria", 2, "RES-01", ptr(16), []string{"O", "M"}, "45.00", "0"},
+		{2, "Operatoria", 2, "RES-01", ptr(11), []string{"O"}, "45.00", "5.00"},
+		{3, "Endodoncia", 3, "END-01", ptr(25), []string{}, "180.00", "0"},
+		{4, "Cirugía", 4, "EXO-01", ptr(38), []string{}, "50.00", "0"},
+	}
+	for i, it := range items {
+		if _, err := tx.Exec(ctx, `INSERT INTO presupuesto_items (presupuesto_id, orden, fase, fase_nombre, sesion, procedimiento_id, diente, superficies, honorario, descuento)
+			VALUES ($1,$2,$3,$4,$5,(SELECT id FROM procedimientos WHERE codigo=$6),$7,$8,$9,$10)`,
+			pres, i+1, it.fase, it.faseNom, it.sesion, it.proc, it.diente, it.sups, it.hon, it.desc); err != nil {
+			return err
+		}
+	}
+	return tx.Commit(ctx)
+}
+
+func ptr[T any](v T) *T { return &v }
