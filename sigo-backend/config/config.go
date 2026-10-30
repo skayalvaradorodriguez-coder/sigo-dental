@@ -4,6 +4,7 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -98,6 +99,23 @@ func Cargar(archivos ...string) (Config, error) {
 	c.DespachoCada = time.Duration(seg) * time.Second
 	if c.RedisDB, err = strconv.Atoi(env("REDIS_DB", "0")); err != nil || c.RedisDB < 0 || c.RedisDB > 15 {
 		errs = append(errs, "REDIS_DB debe ser un entero entre 0 y 15")
+	}
+	// REDIS_URL (redis://[usuario:clave@]host:puerto[/db]), como la entrega Render Key Value, tiene
+	// prioridad sobre REDIS_ADDR / REDIS_PASSWORD / REDIS_DB.
+	if ru := os.Getenv("REDIS_URL"); ru != "" {
+		if u, e := url.Parse(ru); e != nil || u.Scheme != "redis" || u.Host == "" {
+			errs = append(errs, "REDIS_URL inválida (se espera redis://host:puerto)")
+		} else {
+			c.RedisAddr = u.Host
+			if p, ok := u.User.Password(); ok {
+				c.RedisPass = p
+			}
+			if db := strings.Trim(u.Path, "/"); db != "" {
+				if c.RedisDB, err = strconv.Atoi(db); err != nil || c.RedisDB < 0 || c.RedisDB > 15 {
+					errs = append(errs, "REDIS_URL: la base debe ser un entero entre 0 y 15")
+				}
+			}
+		}
 	}
 	if c.ProveedorMensajeria != "simulated" {
 		errs = append(errs, `MESSAGING_PROVIDER: sólo "simulated" está implementado`)
