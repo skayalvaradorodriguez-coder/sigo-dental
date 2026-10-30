@@ -47,4 +47,6 @@ Uso en la Etapa 4: elaborar y presentar presupuestos ⇒ `presupuestos.escribir`
 
 Uso en la Etapa 5: abrir y cerrar la caja propia, ver sus cobros y los pendientes de un paciente ⇒ `caja.operar`; cobrar y anular ⇒ `caja.operar` + `facturacion.emitir`; reintentar un comprobante ⇒ `facturacion.emitir`; conciliar cierres, revisarlos y ver cuentas por cobrar ⇒ `caja.revisar` (Auditor). Ninguna respuesta de las rutas con `caja.operar` incluye el teórico (RN-02).
 
+Uso en la Etapa 6: ver stock, kardex y recetas ⇒ `inventario.leer` (odontólogo, asistente, Auditor); registrar entradas, ajustes y transferencias ⇒ `inventario.escribir` (asistente); crear o modificar insumos y recetas de consumo ⇒ `inventario.configurar` (Auditor). Las salidas por procedimiento no tienen ruta propia: las genera el registro del procedimiento realizado. Honorarios: el odontólogo (`honorarios.propios`) ve sólo lo suyo; el Auditor ve todo (`honorarios.todos`), cierra liquidaciones y crea reglas (`honorarios.configurar`). El Auditor también lee los catálogos, sin modificarlos.
+
 Verificación: `pruebas/permisos_test.go` prueba la matriz rol × endpoint contra la API real (403 donde no corresponde) y `permisos/permisos_test.go` comprueba que cada permiso pertenece al catálogo.
