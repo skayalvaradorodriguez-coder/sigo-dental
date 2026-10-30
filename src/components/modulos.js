@@ -1,0 +1,135 @@
+// Menú de la aplicación. Cada opción declara los permisos que la habilitan (basta uno) y la etapa
+// del plan en la que se implementa. La interfaz sólo OCULTA opciones: quien protege es el backend.
+import {
+  Boxes,
+  Building2,
+  CalendarDays,
+  ClipboardSignature,
+  FileText,
+  HandCoins,
+  LayoutDashboard,
+  Receipt,
+  ScrollText,
+  Settings,
+  Stethoscope,
+  UserRound,
+  Users,
+} from "lucide-react";
+
+export const ETAPA_ACTUAL = 1;
+
+export const MODULOS = [
+  { ruta: "/", etiqueta: "Panel", icono: LayoutDashboard, permisos: [], grupo: "principal", etapa: 1 },
+  {
+    ruta: "/pacientes",
+    etiqueta: "Pacientes",
+    icono: UserRound,
+    permisos: ["pacientes.leer"],
+    grupo: "principal",
+    etapa: 2,
+    requisitos: "RF-01, RF-02",
+    resumen:
+      "Ficha única del paciente, tutor legal para menores, convenios, anamnesis obligatoria y alertas médicas visibles en la cabecera.",
+  },
+  {
+    ruta: "/agenda",
+    etiqueta: "Agenda",
+    icono: CalendarDays,
+    permisos: ["citas.leer"],
+    grupo: "principal",
+    etapa: 2,
+    requisitos: "RF-09, RF-10, RF-11, RN-03",
+    resumen:
+      "Vista día/semana por sillón y profesional, estados de cita, recordatorios a 48 h y 24 h, y bloqueo de citas superpuestas en el mismo sillón.",
+  },
+  {
+    ruta: "/expediente",
+    etiqueta: "Expediente clínico",
+    icono: Stethoscope,
+    permisos: ["clinica.leer"],
+    grupo: "principal",
+    etapa: 3,
+    requisitos: "RF-03, RF-04, RF-05, RN-01",
+    resumen:
+      "Odontograma FDI/Universal por superficies, periodontograma de 6 puntos con NIC, notas SOEP con bloqueo y firma, y adendas.",
+  },
+  {
+    ruta: "/presupuestos",
+    etiqueta: "Tratamientos y presupuestos",
+    icono: FileText,
+    permisos: ["presupuestos.leer"],
+    grupo: "principal",
+    etapa: 4,
+    requisitos: "RF-07, RF-08",
+    resumen:
+      "Planes por fases y sesiones, aprobación total o parcial y conversión de ítems aprobados en tareas agendables.",
+  },
+  {
+    ruta: "/consentimientos",
+    etiqueta: "Consentimientos",
+    icono: ClipboardSignature,
+    permisos: ["consentimientos.gestionar", "clinica.leer"],
+    grupo: "principal",
+    etapa: 4,
+    requisitos: "RF-06",
+    resumen:
+      "Plantillas de consentimiento por procedimiento, firma manuscrita digitalizada u OTP y documento inmutable con sello de tiempo.",
+  },
+  {
+    ruta: "/caja",
+    etiqueta: "Caja y facturación",
+    icono: Receipt,
+    permisos: ["caja.operar", "caja.revisar", "facturacion.emitir"],
+    grupo: "principal",
+    etapa: 5,
+    requisitos: "RF-12, RN-02",
+    resumen:
+      "Cobros con pagos mixtos, cierre de caja ciego y emisión de comprobantes mediante un adaptador de facturación electrónica.",
+  },
+  {
+    ruta: "/inventario",
+    etiqueta: "Inventario",
+    icono: Boxes,
+    permisos: ["inventario.leer"],
+    grupo: "principal",
+    etapa: 6,
+    requisitos: "RF-14",
+    resumen: "Stock por consultorio, recetas estándar de consumo y descargo automático al completar procedimientos.",
+  },
+  {
+    ruta: "/honorarios",
+    etiqueta: "Honorarios",
+    icono: HandCoins,
+    permisos: ["honorarios.propios", "honorarios.todos"],
+    grupo: "principal",
+    etapa: 6,
+    requisitos: "RF-13",
+    resumen:
+      "Reglas de comisión configurables (porcentaje, monto fijo o porcentaje neto de costos) y liquidación por periodo.",
+  },
+  { ruta: "/usuarios", etiqueta: "Usuarios", icono: Users, permisos: ["usuarios.gestionar"], grupo: "admin", etapa: 1 },
+  {
+    ruta: "/catalogos",
+    etiqueta: "Catálogos",
+    icono: Building2,
+    permisos: ["catalogos.gestionar"],
+    grupo: "admin",
+    etapa: 2,
+  },
+  {
+    ruta: "/configuracion",
+    etiqueta: "Configuración",
+    icono: Settings,
+    permisos: ["ajustes.gestionar"],
+    grupo: "admin",
+    etapa: 1,
+  },
+  {
+    ruta: "/auditoria",
+    etiqueta: "Auditoría",
+    icono: ScrollText,
+    permisos: ["auditoria.leer"],
+    grupo: "admin",
+    etapa: 1,
+  },
+];

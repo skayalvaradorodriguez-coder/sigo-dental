@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+/* Identidad visual clínica: verde azulado profundo (confianza, higiene) sobre
+   neutros fríos; rojo reservado para alertas médicas y errores. */
+@theme {
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --color-brand-50: #eef7f8;
+  --color-brand-100: #d5ecef;
+  --color-brand-200: #a9d7dd;
+  --color-brand-500: #1a7f8e;
+  --color-brand-600: #136876;
+  --color-brand-700: #0b4f5c;
+  --color-brand-800: #083c46;
+  --color-brand-900: #052a31;
+
+  --color-ink: #14212b;
+  --color-muted: #5b6b77;
+  --color-line: #dbe2e7;
+  --color-canvas: #f4f7f9;
+
+  --color-danger-50: #fdf1f0;
+  --color-danger-600: #b42318;
+  --color-danger-700: #912018;
+  --color-warn-50: #fff8eb;
+  --color-warn-700: #93500a;
+  --color-ok-50: #effaf3;
+  --color-ok-700: #1b6b3a;
+}
+
+@layer base {
+  html {
+    @apply bg-canvas text-ink antialiased;
+    font-feature-settings: "tnum" 1; /* cifras tabulares: columnas numéricas alineadas */
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand-500;
+  }
+}
