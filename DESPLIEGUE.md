@@ -6,6 +6,23 @@ Una sola imagen Docker: la API en Go sirve también la PWA compilada (`STATIC_DI
 > Antes de producción con pacientes reales, lea la sección 8 (lo que falta decidir). Los proveedores
 > de mensajería y de facturación siguen **SIMULADOS**.
 
+## 0. Demostración académica (lo que está configurado en `render.yaml`)
+
+`render.yaml` despliega el modo **`APP_ENV=demo`** en el plan **gratuito**: la misma seguridad que
+producción (TLS hacia la base, HSTS, CSP, secretos propios), pero al arrancar carga los **datos
+ficticios** de la semilla y el paciente de volumen VOL000001, y la PWA muestra el aviso
+"DEMOSTRACIÓN · datos ficticios". En la verificación en dos pasos aparece **"Mostrar código de
+demostración"** (ruta `/api/demo/mfa`, sólo para usuarios `@demo.sigo` que ya dieron su contraseña;
+no existe con `APP_ENV=prod`). Usuarios: los de la semilla (`odontologo@demo.sigo`,
+`recepcion@demo.sigo`, `auditor@demo.sigo`, …), contraseña `Demo-Sigo-2026`.
+
+Pasos: §2 (Neon) → §3 (Blueprint; en `WEB_ORIGIN` ponga la URL `https://….onrender.com` que Render
+le asigne) → abrir la URL. No hace falta §4: los usuarios demo ya existen.
+
+Limitaciones del plan gratuito: se duerme tras 15 min sin uso (la primera visita tarda ~1 min) y
+los archivos subidos se borran al reiniciar. Las mediciones de rendimiento hechas ahí **no** valen
+como RNF-01/RNF-03 de producción (CPU compartida); se registran como evidencia del despliegue.
+
 ## 1. Probar la imagen en su equipo (Docker Desktop)
 
 ```powershell

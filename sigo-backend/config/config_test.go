@@ -27,3 +27,20 @@ func TestProduccionExigeTLSYSecretoPropio(t *testing.T) {
 		t.Errorf("configuración de producción válida: %v", err)
 	}
 }
+
+// El modo demo (despliegue público con datos ficticios) tiene las mismas exigencias que producción.
+func TestDemoExigeLoMismoQueProduccion(t *testing.T) {
+	t.Setenv("APP_ENV", "demo")
+	t.Setenv("CLINIC_TIMEZONE", "America/Guayaquil")
+	t.Setenv("WEB_ORIGIN", "https://demo.example.com")
+	t.Setenv("JWT_SECRET", strings.Repeat("x", 48))
+	t.Setenv("DATABASE_URL", "postgres://u:p@host/db?sslmode=disable")
+	if _, err := Cargar("no-existe.env"); err == nil || !strings.Contains(err.Error(), "sslmode=require") {
+		t.Fatalf("demo sin TLS debe rechazarse: %v", err)
+	}
+	t.Setenv("DATABASE_URL", "postgres://u:p@host/db?sslmode=require")
+	c, err := Cargar("no-existe.env")
+	if err != nil || !c.EsProduccion() || !c.EsDemo() {
+		t.Fatalf("demo válida: %v", err)
+	}
+}
