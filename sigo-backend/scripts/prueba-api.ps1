@@ -275,6 +275,38 @@ if ($mio) {
 } else { Falla "El cierre no aparece para el Auditor" }
 
 # ---------------------------------------------------------------------------------------
+Titulo "9. Inventario y honorarios (RF-14, RF-13)"
+$rec2 = Espera (Api "GET" "/api/inventario/recetas" $doc) 200 "Recetas de consumo"
+$recPro = @($rec2 | Where-Object { $_.codigo -eq "PRO-01" })[0]
+if ($recPro) { Ok "PRO-01 descuenta $(@($recPro.lineas).Count) insumo(s); costo estándar de materiales $($recPro.costoEstandar)" }
+$cuerpo = @{ procedimientoId = $recPro.procedimientoId; observaciones = "Prueba del script (descargo)"; codigo = (CodigoMFA "odontologo@demo.sigo") }
+$rz = Api "POST" "/api/pacientes/$($ana.id)/procedimientos" $doc $cuerpo
+if ($rz.Status -eq 400) {
+    $espera = 30 - ([DateTimeOffset]::UtcNow.ToUnixTimeSeconds() % 30) + 1
+    Write-Host "  ... código MFA ya usado en esta ventana (anti-replay); esperando $espera s" -ForegroundColor DarkGray
+    Start-Sleep -Seconds $espera
+    $cuerpo.codigo = (CodigoMFA "odontologo@demo.sigo")
+    $rz = Api "POST" "/api/pacientes/$($ana.id)/procedimientos" $doc $cuerpo
+}
+$rzb = Espera $rz 201 "Procedimiento realizado (firmado)"
+if ($rzb) {
+    $k = Espera (Api "GET" "/api/inventario/movimientos?procedimientoRealizadoId=$($rzb.id)" $doc) 200 "Kardex del procedimiento"
+    if (@($k).Count -eq @($recPro.lineas).Count) { Ok "Descargo automático en la misma transacción: $(@($k).Count) salida(s) desde $(@($k)[0].ubicacion)" }
+    else { Falla "Se esperaban $(@($recPro.lineas).Count) salidas y hay $(@($k).Count)" }
+}
+$asis = IniciarSesion "asistente@demo.sigo"
+$gua = @((Espera (Api "GET" "/api/inventario/insumos" $asis) 200 "Insumos") | Where-Object { $_.codigo -eq "GUA-01" })[0]
+$ubs = Espera (Api "GET" "/api/inventario/ubicaciones" $asis) 200 "Ubicaciones"
+Espera (Api "POST" "/api/inventario/movimientos" $asis @{ tipo = "AJUSTE"; insumoId = $gua.id; ubicacionId = @($ubs)[0].id; cantidad = "-1" }) 400 "Ajuste sin motivo rechazado" | Out-Null
+Espera (Api "POST" "/api/inventario/movimientos" $asis @{ tipo = "ENTRADA"; insumoId = $gua.id; ubicacionId = @($ubs)[0].id; cantidad = "50"; motivo = "Compra (script)" }) 201 "Entrada de 50 pares de guantes" | Out-Null
+Espera (Api "POST" "/api/inventario/movimientos" $doc @{ tipo = "ENTRADA"; insumoId = $gua.id; ubicacionId = @($ubs)[0].id; cantidad = "1" }) 403 "El odontólogo NO registra movimientos" | Out-Null
+$hoy = (Get-Date).ToString("yyyy-MM-dd")
+$hon = Espera (Api "GET" "/api/honorarios/calculo?desde=$hoy&hasta=$hoy" $doc) 200 "Odontóloga: sus honorarios pendientes de hoy"
+if ($hon) { Ok "$(@($hon.lineas).Count) procedimiento(s) cobrado(s) · total $($hon.total)" }
+$rg = Espera (Api "GET" "/api/honorarios/reglas" $aud) 200 "Auditor: reglas de honorarios"
+foreach ($x in @($rg)) { Ok "  $($x.descripcion) · $(if ($x.odontologo) { $x.odontologo } else { 'todos' }) · $(if ($x.procedimiento) { $x.procedimiento } else { 'todos los procedimientos' })" }
+
+# ---------------------------------------------------------------------------------------
 Write-Host ""
 if ($script:fallas -eq 0) { Write-Host "TODO OK" -ForegroundColor Green; exit 0 }
 Write-Host "$($script:fallas) comprobación(es) fallaron" -ForegroundColor Red

@@ -767,7 +767,7 @@
     },
     "/api/catalogos/convenios": {
       "get": {
-        "description": "Acceso: sesión completa + alguno de: catalogos.gestionar, citas.leer, pacientes.leer.",
+        "description": "Acceso: sesión completa + alguno de: catalogos.gestionar, citas.leer, pacientes.leer, inventario.leer, honorarios.todos.",
         "responses": {
           "200": {
             "description": "Éxito"
@@ -812,12 +812,12 @@
         "tags": [
           "catalogos"
         ],
-        "x-politica": "alguno:catalogos.gestionar|citas.leer|pacientes.leer"
+        "x-politica": "alguno:catalogos.gestionar|citas.leer|pacientes.leer|inventario.leer|honorarios.todos"
       }
     },
     "/api/catalogos/estructura": {
       "get": {
-        "description": "Acceso: sesión completa + alguno de: catalogos.gestionar, citas.leer, pacientes.leer.",
+        "description": "Acceso: sesión completa + alguno de: catalogos.gestionar, citas.leer, pacientes.leer, inventario.leer, honorarios.todos.",
         "responses": {
           "200": {
             "description": "Éxito"
@@ -862,12 +862,12 @@
         "tags": [
           "catalogos"
         ],
-        "x-politica": "alguno:catalogos.gestionar|citas.leer|pacientes.leer"
+        "x-politica": "alguno:catalogos.gestionar|citas.leer|pacientes.leer|inventario.leer|honorarios.todos"
       }
     },
     "/api/catalogos/odontologos": {
       "get": {
-        "description": "Acceso: sesión completa + alguno de: catalogos.gestionar, citas.leer, pacientes.leer.",
+        "description": "Acceso: sesión completa + alguno de: catalogos.gestionar, citas.leer, pacientes.leer, inventario.leer, honorarios.todos.",
         "responses": {
           "200": {
             "description": "Éxito"
@@ -912,12 +912,12 @@
         "tags": [
           "catalogos"
         ],
-        "x-politica": "alguno:catalogos.gestionar|citas.leer|pacientes.leer"
+        "x-politica": "alguno:catalogos.gestionar|citas.leer|pacientes.leer|inventario.leer|honorarios.todos"
       }
     },
     "/api/catalogos/procedimientos": {
       "get": {
-        "description": "Acceso: sesión completa + alguno de: catalogos.gestionar, citas.leer, pacientes.leer.",
+        "description": "Acceso: sesión completa + alguno de: catalogos.gestionar, citas.leer, pacientes.leer, inventario.leer, honorarios.todos.",
         "responses": {
           "200": {
             "description": "Éxito"
@@ -962,12 +962,12 @@
         "tags": [
           "catalogos"
         ],
-        "x-politica": "alguno:catalogos.gestionar|citas.leer|pacientes.leer"
+        "x-politica": "alguno:catalogos.gestionar|citas.leer|pacientes.leer|inventario.leer|honorarios.todos"
       }
     },
     "/api/catalogos/sillones": {
       "get": {
-        "description": "Acceso: sesión completa + alguno de: catalogos.gestionar, citas.leer, pacientes.leer.",
+        "description": "Acceso: sesión completa + alguno de: catalogos.gestionar, citas.leer, pacientes.leer, inventario.leer, honorarios.todos.",
         "responses": {
           "200": {
             "description": "Éxito"
@@ -1012,7 +1012,7 @@
         "tags": [
           "catalogos"
         ],
-        "x-politica": "alguno:catalogos.gestionar|citas.leer|pacientes.leer"
+        "x-politica": "alguno:catalogos.gestionar|citas.leer|pacientes.leer|inventario.leer|honorarios.todos"
       }
     },
     "/api/catalogos/{tipo}": {
@@ -2132,6 +2132,838 @@
           "heartbeat"
         ],
         "x-politica": "completa"
+      }
+    },
+    "/api/honorarios/calculo": {
+      "get": {
+        "description": "Acceso: sesión completa + alguno de: honorarios.propios, honorarios.todos.",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Vista previa de lo pendiente de liquidar: cobrado, laboratorio, materiales, regla aplicada y honorario por procedimiento.",
+        "tags": [
+          "honorarios"
+        ],
+        "x-politica": "alguno:honorarios.propios|honorarios.todos"
+      }
+    },
+    "/api/honorarios/liquidaciones": {
+      "get": {
+        "description": "Acceso: sesión completa + alguno de: honorarios.propios, honorarios.todos.",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Liquidaciones cerradas (el odontólogo ve las suyas).",
+        "tags": [
+          "honorarios"
+        ],
+        "x-politica": "alguno:honorarios.propios|honorarios.todos"
+      },
+      "post": {
+        "description": "Acceso: sesión completa + permiso honorarios.todos.\n\nCuerpo JSON: `{odontologoId, desde, hasta}` (campos desconocidos ⇒ 400).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cierra la liquidación del periodo: copia cada línea con su cálculo; un cobro se liquida una sola vez.",
+        "tags": [
+          "honorarios"
+        ],
+        "x-politica": "permisos:honorarios.todos"
+      }
+    },
+    "/api/honorarios/liquidaciones/{id}": {
+      "get": {
+        "description": "Acceso: sesión completa + alguno de: honorarios.propios, honorarios.todos.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Liquidación con sus líneas.",
+        "tags": [
+          "honorarios"
+        ],
+        "x-politica": "alguno:honorarios.propios|honorarios.todos"
+      }
+    },
+    "/api/honorarios/reglas": {
+      "get": {
+        "description": "Acceso: sesión completa + alguno de: honorarios.propios, honorarios.todos, honorarios.configurar.",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reglas de honorarios con su descripción (el odontólogo ve las generales y las suyas).",
+        "tags": [
+          "honorarios"
+        ],
+        "x-politica": "alguno:honorarios.propios|honorarios.todos|honorarios.configurar"
+      },
+      "post": {
+        "description": "Acceso: sesión completa + permiso honorarios.configurar.\n\nCuerpo JSON: `{odontologoId?, procedimientoId?, tipo, valor, vigenteDesde}` (campos desconocidos ⇒ 400).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Nueva regla (RF-13): PORCENTAJE, MONTO_FIJO o PORCENTAJE_NETO, por odontólogo y/o procedimiento, con fecha de vigencia. Sólo inserción.",
+        "tags": [
+          "honorarios"
+        ],
+        "x-politica": "permisos:honorarios.configurar"
+      }
+    },
+    "/api/inventario/insumos": {
+      "get": {
+        "description": "Acceso: sesión completa + permiso inventario.leer.",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Insumos con costo unitario, stock mínimo y stock total (?todos=true incluye inactivos).",
+        "tags": [
+          "inventario"
+        ],
+        "x-politica": "permisos:inventario.leer"
+      },
+      "post": {
+        "description": "Acceso: sesión completa + permiso inventario.configurar.\n\nCuerpo JSON: `{codigo, nombre, unidad, costoUnitario (4 decimales), stockMinimo?}` (campos desconocidos ⇒ 400).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Crea un insumo.",
+        "tags": [
+          "inventario"
+        ],
+        "x-politica": "permisos:inventario.configurar"
+      }
+    },
+    "/api/inventario/insumos/{id}": {
+      "patch": {
+        "description": "Acceso: sesión completa + permiso inventario.configurar.\n\nCuerpo JSON: `{nombre, unidad, costoUnitario, stockMinimo?, activo?}` (campos desconocidos ⇒ 400).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Modifica o desactiva un insumo (nunca se borra). El costo nuevo rige para descargos futuros.",
+        "tags": [
+          "inventario"
+        ],
+        "x-politica": "permisos:inventario.configurar"
+      }
+    },
+    "/api/inventario/movimientos": {
+      "get": {
+        "description": "Acceso: sesión completa + permiso inventario.leer.",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Kardex (?insumoId=\u0026procedimientoRealizadoId=): entradas, salidas por procedimiento, ajustes y transferencias.",
+        "tags": [
+          "inventario"
+        ],
+        "x-politica": "permisos:inventario.leer"
+      },
+      "post": {
+        "description": "Acceso: sesión completa + permiso inventario.escribir.\n\nCuerpo JSON: `{tipo (ENTRADA|AJUSTE|TRANSFERENCIA), insumoId, ubicacionId, origenId?, cantidad, costoUnitario?, motivo?}` (campos desconocidos ⇒ 400).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Entrada (actualiza el costo), ajuste con motivo (cantidad con signo) o transferencia entre ubicaciones. Las salidas por procedimiento son automáticas.",
+        "tags": [
+          "inventario"
+        ],
+        "x-politica": "permisos:inventario.escribir"
+      }
+    },
+    "/api/inventario/recetas": {
+      "get": {
+        "description": "Acceso: sesión completa + permiso inventario.leer.",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Receta de consumo estándar de cada procedimiento con su costo estándar.",
+        "tags": [
+          "inventario"
+        ],
+        "x-politica": "permisos:inventario.leer"
+      }
+    },
+    "/api/inventario/recetas/{procedimientoId}": {
+      "put": {
+        "description": "Acceso: sesión completa + permiso inventario.configurar.\n\nCuerpo JSON: `{lineas[{insumoId, cantidad}]}` (campos desconocidos ⇒ 400).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "procedimientoId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reemplaza la receta de consumo (auditado con antes y después; no altera descargos pasados).",
+        "tags": [
+          "inventario"
+        ],
+        "x-politica": "permisos:inventario.configurar"
+      }
+    },
+    "/api/inventario/stock": {
+      "get": {
+        "description": "Acceso: sesión completa + permiso inventario.leer.",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Saldo por insumo y ubicación (?ubicacionId=); marca stock bajo el mínimo y saldos negativos.",
+        "tags": [
+          "inventario"
+        ],
+        "x-politica": "permisos:inventario.leer"
+      }
+    },
+    "/api/inventario/ubicaciones": {
+      "get": {
+        "description": "Acceso: sesión completa + permiso inventario.leer.",
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ubicaciones de stock (bodega y consultorios); una es la de por defecto.",
+        "tags": [
+          "inventario"
+        ],
+        "x-politica": "permisos:inventario.leer"
       }
     },
     "/api/login": {
@@ -4131,7 +4963,7 @@
         "x-politica": "permisos:clinica.leer"
       },
       "post": {
-        "description": "Acceso: sesión completa + permiso clinica.firmar.\n\nCuerpo JSON: `{procedimientoId, citaId?, diente?, superficies?[], observaciones?, codigo}` (campos desconocidos ⇒ 400).",
+        "description": "Acceso: sesión completa + permiso clinica.firmar.\n\nCuerpo JSON: `{procedimientoId? | tareaId?, citaId?, diente?, superficies?[], observaciones?, ubicacionId?, codigo}` (campos desconocidos ⇒ 400).",
         "parameters": [
           {
             "in": "path",
@@ -4192,7 +5024,7 @@
             "bearer": []
           }
         ],
-        "summary": "Registra un procedimiento realizado, firmado e inmutable (RN-01: sin edición ni borrado, también en la BD).",
+        "summary": "Registra un procedimiento realizado, firmado e inmutable (RN-01) y, en la misma transacción, descarga los insumos de su receta de consumo (RF-14).",
         "tags": [
           "pacientes"
         ],

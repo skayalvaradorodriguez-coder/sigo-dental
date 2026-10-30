@@ -36,6 +36,8 @@ export const ETIQUETA_ACCION = {
   COBRO: "Cobro",
   ANULACION: "Anulación de cobro",
   COMPROBANTE: "Comprobante",
+  MOVIMIENTO_STOCK: "Movimiento de inventario",
+  LIQUIDACION: "Liquidación de honorarios",
 };
 
 export const ESTADOS_CITA = [
@@ -142,3 +144,17 @@ export const ETIQUETA_MEDIO = {
 };
 export const ETIQUETA_CIERRE = { ABIERTA: "Abierta", CERRADA: "Por revisar", REVISADA: "Revisada" };
 export const ETIQUETA_COMPROBANTE = { FACTURA: "Factura", NOTA_CREDITO: "Nota de crédito" };
+
+// Etapa 6
+export const ETIQUETA_MOVIMIENTO = {
+  ENTRADA: "Entrada",
+  SALIDA_PROCEDIMIENTO: "Salida por procedimiento",
+  AJUSTE: "Ajuste",
+  TRANSFERENCIA: "Transferencia",
+};
+export const TIPOS_REGLA = ["PORCENTAJE", "MONTO_FIJO", "PORCENTAJE_NETO"];
+export const ETIQUETA_REGLA = {
+  PORCENTAJE: "% de lo cobrado",
+  MONTO_FIJO: "Monto fijo por procedimiento",
+  PORCENTAJE_NETO: "% del neto (cobrado − laboratorio − materiales)",
+};

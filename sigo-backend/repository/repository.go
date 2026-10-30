@@ -217,6 +217,26 @@ type DBRepository interface {
 	RegistrarComprobante(ctx context.Context, n NuevoComprobante) error
 	CuentasPorCobrarSeguros(ctx context.Context) ([]models.CuentaSeguro, error)
 	CierresPorRevisar(ctx context.Context) (int, error)
+
+	// Etapa 6 — inventario y honorarios
+	Ubicaciones(ctx context.Context) ([]models.Ubicacion, error)
+	Insumos(ctx context.Context, todos bool) ([]models.Insumo, error)
+	InsumoActivo(ctx context.Context, id string) (bool, error)
+	UbicacionActiva(ctx context.Context, id string) (bool, error)
+	CrearInsumo(ctx context.Context, d InsumoDatos) (string, error)
+	ActualizarInsumo(ctx context.Context, id string, d InsumoDatos) error
+	Stock(ctx context.Context, ubicacionID string) ([]models.StockItem, error)
+	Movimientos(ctx context.Context, insumoID, realizadoID string) ([]models.Movimiento, error)
+	RegistrarMovimiento(ctx context.Context, n NuevoMovimiento) (string, error)
+	Transferir(ctx context.Context, insumoID, origen, destino, cantidad, usuarioID string, motivo *string) (string, error)
+	RecetasConsumo(ctx context.Context) ([]models.RecetaConsumo, error)
+	ReemplazarReceta(ctx context.Context, procedimientoID string, lineas []LineaRecetaNueva) error
+	ReglasHonorario(ctx context.Context) ([]models.ReglaHonorario, error)
+	CrearRegla(ctx context.Context, odontologoID, procedimientoID *string, tipo, valor, vigente, usuarioID string) (string, error)
+	LineasPorLiquidar(ctx context.Context, odontologoID string, desde, hasta time.Time) ([]models.LineaHonorario, error)
+	CrearLiquidacion(ctx context.Context, odontologoID, desde, hasta, total, usuarioID string, lineas []models.LineaHonorario) (string, error)
+	Liquidaciones(ctx context.Context, odontologoID string) ([]models.Liquidacion, error)
+	LiquidacionPorID(ctx context.Context, id string) (*models.Liquidacion, error)
 }
 
 var _ DBRepository = (*Postgres)(nil)

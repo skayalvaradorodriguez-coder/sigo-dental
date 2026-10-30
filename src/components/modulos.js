@@ -16,7 +16,7 @@ import {
   Users,
 } from "lucide-react";
 
-export const ETAPA_ACTUAL = 5;
+export const ETAPA_ACTUAL = 6;
 
 export const MODULOS = [
   { ruta: "/", etiqueta: "Panel", icono: LayoutDashboard, permisos: [], grupo: "principal", etapa: 1 },
@@ -90,7 +90,8 @@ export const MODULOS = [
     grupo: "principal",
     etapa: 6,
     requisitos: "RF-14",
-    resumen: "Stock por consultorio, recetas estándar de consumo y descargo automático al completar procedimientos.",
+    resumen:
+      "Stock por ubicación calculado desde el kardex, recetas de consumo y descargo automático al registrar procedimientos.",
   },
   {
     ruta: "/honorarios",
@@ -101,7 +102,7 @@ export const MODULOS = [
     etapa: 6,
     requisitos: "RF-13",
     resumen:
-      "Reglas de comisión configurables (porcentaje, monto fijo o porcentaje neto de costos) y liquidación por periodo.",
+      "Reglas de comisión (porcentaje, monto fijo o porcentaje del neto de laboratorio y materiales) y liquidación por periodo.",
   },
   { ruta: "/usuarios", etiqueta: "Usuarios", icono: Users, permisos: ["usuarios.gestionar"], grupo: "admin", etapa: 1 },
   {

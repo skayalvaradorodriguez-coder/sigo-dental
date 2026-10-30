@@ -54,3 +54,11 @@ export const totalesItems = (items, topePct = 10) => {
     requiereAutorizacion: requiere,
   };
 };
+
+// Cantidades de inventario (3 decimales): "1.500" → "1,5"; "-2.000" → "−2".
+export const fmtCantidad = (texto) => {
+  const n = Number(texto);
+  if (!Number.isFinite(n)) return "—";
+  const s = Math.abs(n).toLocaleString("es", { maximumFractionDigits: 3 });
+  return n < 0 ? `−${s}` : s;
+};

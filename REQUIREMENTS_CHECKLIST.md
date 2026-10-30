@@ -11,12 +11,12 @@
 
 | Campo | Valor |
 |---|---|
-| **Etapa actual** | Etapa 5 completada · siguiente: Etapa 6 (inventario y honorarios) |
-| **Última tarea completada** | Etapa 5: caja con pagos mixtos, comprobantes por adaptador (SIMULADO), anulación con nota de crédito, cierre ciego conciliado por el Auditor y cuentas por cobrar a aseguradoras (2026-10-30) |
-| **Siguiente tarea pendiente** | E6-01: insumos por ubicación y recetas de consumo por procedimiento (RF-14) |
-| **Pruebas** | Go: 30 unitarias + 58 de integración ✅ · Frontend: 27 (Vitest) ✅ · Humo PowerShell ✅ · Navegador: 21 (Etapas 1–2) + 10 (Etapa 3) + 12 (Etapa 4) + 7 (Etapa 5) pasos ✅ |
-| **Cobertura backend** | Capa de endpoints 81,0 % ✅ (meta SRS 8.2: ≥ 80 %) · total del backend 80,3 % |
-| **Bloqueadores** | Ninguno para la Etapa 6. Preguntas abiertas al cliente: Q-01…Q-06 (`docs/01-analisis-requisitos.md` §1.4); Q-01 (país) impide conectar la facturación real |
+| **Etapa actual** | Etapa 6 completada · siguiente: Etapa 7 (calidad y salida) |
+| **Última tarea completada** | Etapa 6: inventario con kardex, descargo automático y atómico al registrar procedimientos, recetas de consumo; honorarios con las tres reglas, precedencia y liquidación por periodo (2026-10-30) |
+| **Siguiente tarea pendiente** | E7-01: medición de RNF-01 (expediente < 1,5 s) con volumen de datos definido |
+| **Pruebas** | Go: 33 unitarias + 61 de integración ✅ · Frontend: 29 (Vitest) ✅ · Humo PowerShell ✅ · Navegador: 21 (Etapas 1–2) + 10 (Etapa 3) + 12 (Etapa 4) + 7 (Etapa 5) + 6 (Etapa 6) pasos ✅ |
+| **Cobertura backend** | Capa de endpoints 80,7 % ✅ (meta SRS 8.2: ≥ 80 %) · total del backend 80,4 % |
+| **Bloqueadores** | Ninguno para la Etapa 7. Preguntas abiertas al cliente: Q-01…Q-06 (`docs/01-analisis-requisitos.md` §1.4); Q-01 (país) impide conectar la facturación real |
 
 ## Stack (igual a catalogo-multinivel)
 
@@ -69,8 +69,8 @@
   - [ ] ⏳ Proveedor de facturación real e impuestos — requiere el país y su autoridad tributaria (Q-01)
 
 ### Honorarios e inventario (Etapa 6)
-- [ ] **RF-13** Reglas de honorarios: % fijo, monto fijo, % neto de laboratorio/materiales
-- [ ] **RF-14** Descargo automático de insumos según receta de consumo
+- [x] **RF-13** Reglas de honorarios: % de lo cobrado, monto fijo por procedimiento y % del neto (cobrado − laboratorio del presupuesto − materiales del inventario); por odontólogo y/o procedimiento con vigencia; liquidación por periodo, una sola vez por cobro
+- [x] **RF-14** Descargo automático de insumos según la receta de consumo, en la misma transacción que el procedimiento realizado (si falla, no queda ninguno); stock por ubicación, kardex de sólo inserción, alertas de mínimo y saldo negativo
 
 ## Reglas de negocio (SRS §6)
 - [x] **RN-01** Procedimiento realizado no se borra ni se edita (trigger en la BD); correcciones por adenda firmada
@@ -92,13 +92,13 @@
   - [x] Odontograma, periodontograma, notas, adendas y procedimientos (lecturas y escrituras); firmas fallidas
   - [x] Presupuestos, autorizaciones de descuento, decisiones, consentimientos, recetas y archivos (lecturas y escrituras); archivo alterado
   - [x] Caja: apertura, cobros, anulaciones, comprobantes, cierre y revisión
-  - [ ] Inventario y honorarios (Etapa 6)
+  - [x] Inventario (insumos, movimientos, recetas) y honorarios (reglas, liquidaciones)
 - [x] **RNF-07** Responsive: escritorio y celular verificados · [ ] tablet 10,5" y 1920×1080 automatizados (Etapa 7)
 - [ ] **RNF-08** Navegadores: hoy probado en Chromium; Firefox, WebKit/Safari y Edge en la Etapa 7
 
 ## Criterios técnicos (SRS §8.2)
 - [x] OpenAPI 3 generado del código (`go run . openapi`)
-- [x] Cobertura ≥ 80 % en la capa de endpoints — medida 81,0 % (total 80,3 %)
+- [x] Cobertura ≥ 80 % en la capa de endpoints — medida 80,7 % (total 80,4 %)
 - [ ] ⏳ DAST/SAST sin hallazgos Altos/Críticos (ZAP, gosec, govulncheck, npm audit) — Etapa 7
 
 ## Etapas
@@ -108,5 +108,5 @@
 - [x] **Etapa 3 — Núcleo clínico** (RF-03, RF-04, RF-05, RN-01)
 - [x] **Etapa 4 — Planes y consentimientos** (RF-06, RF-07, RF-08, recetas, archivos)
 - [x] **Etapa 5 — Caja y facturación** (RF-12, RN-02)
-- [ ] **Etapa 6 — Inventario y honorarios** (RF-13, RF-14)
+- [x] **Etapa 6 — Inventario y honorarios** (RF-13, RF-14)
 - [ ] **Etapa 7 — Calidad y salida** (RNF-01…04, RNF-08, 8.2, despliegue Render + Neon)
