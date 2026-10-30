@@ -18,11 +18,12 @@ type DefAjuste struct {
 }
 
 const (
-	AjusteInactividad   = "seguridad.minutosInactividad"
-	AjusteBloqueoNotas  = "clinica.horasBloqueoNotas"
-	AjusteMaxIntentos   = "seguridad.maxIntentosFallidos"
-	AjusteMinBloqueo    = "seguridad.minutosBloqueo"
-	AjusteTopeDescuento = "presupuestos.topeDescuento"
+	AjusteInactividad    = "seguridad.minutosInactividad"
+	AjusteBloqueoNotas   = "clinica.horasBloqueoNotas"
+	AjusteMaxIntentos    = "seguridad.maxIntentosFallidos"
+	AjusteMinBloqueo     = "seguridad.minutosBloqueo"
+	AjusteTopeDescuento  = "presupuestos.topeDescuento"
+	AjusteToleranciaCaja = "caja.toleranciaCentavos"
 )
 
 var DefsAjustes = []DefAjuste{
@@ -31,6 +32,7 @@ var DefsAjustes = []DefAjuste{
 	{AjusteMaxIntentos, "Intentos fallidos antes de bloquear la cuenta", "Supuesto S-10 (el SRS no lo especifica).", 3, 10, 5},
 	{AjusteMinBloqueo, "Duración del bloqueo de cuenta (minutos)", "Supuesto S-10.", 5, 120, 15},
 	{AjusteTopeDescuento, "Tope de descuento sin autorización (% del honorario)", "RF-07 / S-25: por encima de este porcentaje, el descuento debe autorizarlo otra persona con su código MFA.", 0, 100, 10},
+	{AjusteToleranciaCaja, "Tolerancia del cierre de caja (centavos)", "RN-02 / S-05: diferencia máxima, por medio de pago, para considerar cuadrado un cierre. 0 = exacto.", 0, 10000, 0},
 }
 
 func DefAjustePor(clave string) (DefAjuste, bool) {

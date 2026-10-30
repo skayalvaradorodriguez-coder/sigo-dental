@@ -16,6 +16,7 @@ import (
 	"sigo-backend/almacenamiento"
 	"sigo-backend/cache"
 	"sigo-backend/config"
+	"sigo-backend/facturacion"
 	"sigo-backend/middleware"
 	"sigo-backend/models"
 	"sigo-backend/notificaciones"
@@ -30,10 +31,11 @@ type Controllers struct {
 	Despachador *notificaciones.Despachador
 	Ahora       func() time.Time // inyectable en pruebas
 	Archivos    almacenamiento.Almacen
+	Facturacion facturacion.Proveedor
 }
 
 func NewControllers(repo repository.DBRepository, c cache.CacheRepository, cfg config.Config, d *notificaciones.Despachador) *Controllers {
-	return &Controllers{Repo: repo, Cache: c, Cfg: cfg, Despachador: d, Ahora: time.Now}
+	return &Controllers{Repo: repo, Cache: c, Cfg: cfg, Despachador: d, Ahora: time.Now, Facturacion: &facturacion.Simulado{}}
 }
 
 // ------------------------------------------------------------------ respuestas
