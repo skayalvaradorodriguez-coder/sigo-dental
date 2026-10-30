@@ -25,6 +25,12 @@ React SPA / PWA (:5173) ──apiFetch + Bearer JWT──► Go/Fiber API (:3000
 | `docs/01…05` | Análisis de requisitos, arquitectura, modelo de datos, matriz de permisos, trazabilidad y pruebas. |
 | `docs/openapi.json` | OpenAPI 3 generado con `go run . openapi`. |
 | `docs/capturas/` | Pantallas de referencia. |
+| `docs/mediciones/`, `docs/seguridad/` | Mediciones de RNF-01/RNF-03 y resultados de gosec, npm audit y OWASP ZAP. |
+| `DESPLIEGUE.md` | Despliegue en Render + Neon y verificaciones de producción. |
+| `Dockerfile`, `.dockerignore`, `render.yaml` | Imagen única (API + PWA) y blueprint de Render. |
+| `.github/workflows/ci.yml` | CI: pruebas, cobertura, gosec, govulncheck, npm audit y Playwright en Chromium/Firefox/WebKit. |
+| `playwright.config.js`, `e2e/` | Pruebas de navegador por navegador y tamaño (RNF-07, RNF-08), CSP y medición de RNF-01. |
+| `public/imprimir.css` | Hoja de impresión (la CSP no admite estilos en línea). |
 
 ## Frontend (raíz del repo) — SPA
 
@@ -92,7 +98,7 @@ Config: `.env` opcional (ver `.env.example`): `VITE_API_URL` vacía = mismo orig
 
 ## Backend (`sigo-backend/`) — Go 1.24 + Fiber v2
 
-Comandos: `go run .` (API) | `go run . migrar` | `go run . semilla [--reset-usuarios]` | `go run . totp <correo>` | `go run . openapi` | `go test ./...`.
+Comandos: `go run .` (API) | `go run . migrar` | `go run . semilla [--reset-usuarios]` | `go run . totp <correo>` | `go run . openapi` | `go run . crear-admin <correo> "<nombre>"` | `go run . volumen` · `medir [url] [n]` · `carga [url] [usuarios] [segundos]` · `token <correo>` (no en producción) | `go test ./...`.
 Config: `.env` (copiar de `.env.example`); pruebas: `.env.test` (base `sigo_dental_test`). Docker: `docker compose up -d`.
 
 | Ruta | Responsabilidad |
@@ -119,6 +125,7 @@ Config: `.env` (copiar de `.env.example`); pruebas: `.env.test` (base `sigo_dent
 | `cache/cache.go` | `CacheRepository` + `RedisCache` (nil-safe). |
 | `domain/` | Reglas puras: alertas, estados de cita, edad y día local, numeración dental, superficies, hallazgos, estado del odontograma, NIC, dinero en centavos y totales, alertas de receta, pago mixto y conciliación del cierre, reglas y cálculo de honorarios, cantidades con 3 decimales. |
 | `facturacion/` | Puerto `Proveedor` hacia la autoridad tributaria y proveedor `Simulado` (números SIM-…). |
+| `herramientas/` | Etapa 7: paciente de volumen, medición del expediente (RNF-01), prueba de carga (RNF-03) y sesiones de prueba. |
 | `almacenamiento/` | Interfaz `Almacen`: `Local` (disco, `ARCHIVOS_DIR`, nunca sobrescribe) y `Memoria` (pruebas). |
 | `notificaciones/` | Planificador, mensajería (`Simulada`) y despachador. |
 | `seguridad/` | bcrypt, JWT, TOTP (RFC 6238), tokens. |
@@ -129,6 +136,7 @@ Config: `.env` (copiar de `.env.example`); pruebas: `.env.test` (base `sigo_dent
 | `semilla/semilla.go` | Datos ficticios de demostración. |
 | `pruebas/` | Integración contra la API y una base real (auth, permisos, pacientes, agenda, expediente clínico, planes y documentos, complementos, OpenAPI). |
 | `scripts/prueba-api.ps1` | Prueba de humo en PowerShell. |
+| `scripts/medir.ps1`, `scripts/seguridad.ps1` | Mediciones (RNF-01, RNF-03, navegadores) y análisis de seguridad (gosec, govulncheck, npm audit, ZAP). |
 
 ## Rutas de la API (todas bajo `/api`)
 
@@ -156,4 +164,4 @@ Config: `.env` (copiar de `.env.example`); pruebas: `.env.test` (base `sigo_dent
 | Inventario | `GET /inventario/ubicaciones`, `/insumos`, `/stock`, `/movimientos`, `/recetas`; `POST /inventario/movimientos`; `POST /inventario/insumos`, `PATCH /inventario/insumos/:id`, `PUT /inventario/recetas/:procedimientoId` | leer: `inventario.leer` · movimientos: `inventario.escribir` · insumos y recetas: `inventario.configurar` |
 | Honorarios | `GET /honorarios/reglas`, `/calculo`, `/liquidaciones`, `/liquidaciones/:id`; `POST /honorarios/reglas`, `POST /honorarios/liquidaciones` | ver: `honorarios.propios` (sólo lo suyo) o `honorarios.todos` · reglas: `honorarios.configurar` · liquidar: `honorarios.todos` |
 
-Detalle de cada una (cuerpos y respuestas): `docs/openapi.json` (104 rutas).
+Detalle de cada una (cuerpos y respuestas): `docs/openapi.json` (105 rutas).

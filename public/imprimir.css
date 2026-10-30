@@ -1,0 +1,53 @@
+/* Hoja de impresión de recetas, consentimientos, presupuestos, comprobantes y liquidaciones
+   (src/utils/imprimir.js). Es un archivo propio y no un <style> en línea: la política de seguridad
+   (CSP) del servidor no admite estilos en línea. */
+body {
+  font: 13px/1.5 system-ui, sans-serif;
+  color: #111;
+  margin: 24px;
+}
+h1 {
+  font-size: 18px;
+  margin: 0 0 4px;
+}
+h2 {
+  font-size: 14px;
+  margin: 18px 0 6px;
+}
+.muted {
+  color: #555;
+  font-size: 11px;
+}
+.pre {
+  white-space: pre-wrap;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+th,
+td {
+  border-bottom: 1px solid #ccc;
+  padding: 4px 6px;
+  text-align: left;
+  vertical-align: top;
+}
+td.num,
+th.num {
+  text-align: right;
+}
+img.firma {
+  max-height: 110px;
+  border-bottom: 1px solid #333;
+}
+.firma-linea {
+  margin-top: 48px;
+}
+.pie {
+  margin-top: 28px;
+  font-size: 10px;
+  color: #555;
+  border-top: 1px solid #ccc;
+  padding-top: 6px;
+}

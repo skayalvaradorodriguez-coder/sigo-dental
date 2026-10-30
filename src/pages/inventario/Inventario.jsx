@@ -18,8 +18,10 @@ import {
 import { useAuth } from "../../context/useAuth";
 import { useApi } from "../../hooks/useApi";
 import { mensajeDe } from "../../services/http";
+import { getEstructura } from "../../services/catalogosService";
 import {
   actualizarInsumo,
+  crearUbicacion,
   crearInsumo,
   getInsumos,
   getMovimientos,
@@ -33,18 +35,88 @@ import { fmtCantidad, fmtDinero } from "../../utils/dinero";
 import { ETIQUETA_MOVIMIENTO } from "../../utils/etiquetas";
 import { fmtFechaHora } from "../../utils/fechas";
 
-const Stock = ({ ubicaciones }) => {
+const NuevaUbicacion = ({ alCerrar, alGuardar }) => {
+  const est = useApi(useCallback(() => getEstructura(), []));
+  const [f, setF] = useState({ nombre: "", consultorioId: "", porDefecto: false });
+  const [error, setError] = useState("");
+  const consultorios = (est.data ?? []).flatMap((s) => (s.consultorios ?? []).map((c) => ({ ...c, sede: s.nombre })));
+  return (
+    <Modal open title="Nueva ubicación de stock" onClose={alCerrar}>
+      <div className="space-y-3">
+        {error && <Alert tone="danger">{error}</Alert>}
+        <Input label="Nombre" value={f.nombre} onChange={(e) => setF({ ...f, nombre: e.target.value })} />
+        <Select
+          label="Consultorio (opcional)"
+          value={f.consultorioId}
+          onChange={(e) => setF({ ...f, consultorioId: e.target.value })}
+        >
+          <option value="">Bodega (sin consultorio)</option>
+          {consultorios.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.sede} · {c.nombre}
+            </option>
+          ))}
+        </Select>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={f.porDefecto}
+            onChange={(e) => setF({ ...f, porDefecto: e.target.checked })}
+            className="accent-brand-700"
+          />
+          Ubicación por defecto (de aquí se descuentan los procedimientos sin consultorio)
+        </label>
+        <div className="flex justify-end gap-2">
+          <Button variant="secondary" onClick={alCerrar}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={async () => {
+              setError("");
+              try {
+                await crearUbicacion(f);
+                alGuardar();
+              } catch (e) {
+                setError(mensajeDe(e));
+              }
+            }}
+          >
+            Guardar
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
+const Stock = ({ ubicaciones, configura, alCambiar }) => {
+  const [nueva, setNueva] = useState(false);
   const [ubic, setUbic] = useState("");
   const { data, error } = useApi(useCallback(() => getStock(ubic), [ubic]));
   if (error) return <Alert tone="danger">{error}</Alert>;
   const alertas = (data ?? []).filter((x) => x.negativo || x.bajo);
   return (
     <div className="space-y-4">
+      {configura && (
+        <Button variant="secondary" onClick={() => setNueva(true)}>
+          <Plus className="size-4" /> Nueva ubicación
+        </Button>
+      )}
+      {nueva && (
+        <NuevaUbicacion
+          alCerrar={() => setNueva(false)}
+          alGuardar={() => {
+            setNueva(false);
+            alCambiar();
+          }}
+        />
+      )}
       <Select label="Ubicación" value={ubic} onChange={(e) => setUbic(e.target.value)} className="max-w-xs">
         <option value="">Todas</option>
         {ubicaciones.map((u) => (
           <option key={u.id} value={u.id}>
             {u.nombre}
+            {u.porDefecto ? " (por defecto)" : ""}
           </option>
         ))}
       </Select>
@@ -562,7 +634,7 @@ const Inventario = () => {
           <Skeleton className="h-40" />
         ) : (
           <>
-            {pestana === "stock" && <Stock ubicaciones={ubic.data} />}
+            {pestana === "stock" && <Stock ubicaciones={ubic.data} configura={configura} alCambiar={ubic.recargar} />}
             {pestana === "kardex" && <Kardex insumos={ins.data} />}
             {pestana === "registrar" && (
               <FormularioMovimiento insumos={ins.data.filter((i) => i.activo)} ubicaciones={ubic.data} />

@@ -270,7 +270,9 @@ func toFloat(v any) float64 {
 		return x
 	case string:
 		var f float64
-		fmt.Sscan(x, &f)
+		if _, err := fmt.Sscan(x, &f); err != nil {
+			return 0
+		}
 		return f
 	}
 	return 0

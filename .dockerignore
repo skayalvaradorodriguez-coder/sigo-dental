@@ -1,0 +1,11 @@
+node_modules
+dist
+dev-dist
+e2e-informe
+test-results
+.git
+**/.env
+sigo-backend/archivos
+sigo-backend/*.exe
+*.log
+docs/capturas

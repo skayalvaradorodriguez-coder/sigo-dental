@@ -93,9 +93,31 @@ func NuevaApp(h *controllers.Controllers) (*fiber.App, []Registro) {
 	}
 	app := fiber.New(cfgFiber)
 	app.Use(recover.New())
-	app.Use(helmet.New())
+	app.Use(helmet.New(helmet.Config{
+		// CSP: sólo recursos propios, sin scripts ni estilos en línea (los estilos de React se aplican por
+		// CSSOM, que la CSP no restringe); blob:/data: para la firma, los adjuntos y el visor de PDF.
+		ContentSecurityPolicy: "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; " +
+			"font-src 'self'; connect-src 'self'; frame-src 'self' blob:; worker-src 'self'; manifest-src 'self'; object-src 'none'; " +
+			"base-uri 'self'; form-action 'self'; frame-ancestors 'self'",
+		PermissionPolicy: "camera=(), microphone=(), geolocation=(), payment=()",
+		XFrameOptions:    "SAMEORIGIN",
+		ReferrerPolicy:   "no-referrer",
+	}))
+	if h.Cfg.EsProduccion() {
+		// HSTS: el proxy de la plataforma termina TLS; el navegador debe usar siempre HTTPS (RNF-04).
+		app.Use(func(c *fiber.Ctx) error {
+			c.Set(fiber.HeaderStrictTransportSecurity, "max-age=31536000; includeSubDomains")
+			return c.Next()
+		})
+	}
 	app.Use(cors.New(cors.Config{AllowOrigins: h.Cfg.WebOrigin, AllowHeaders: "Authorization, Content-Type", AllowMethods: "GET,POST,PUT,PATCH,DELETE"}))
 
+	// Datos clínicos y financieros: ninguna respuesta de la API se guarda en cachés del navegador ni
+	// intermedias (la caché del servidor es Redis).
+	app.Use("/api", func(c *fiber.Ctx) error {
+		c.Set(fiber.HeaderCacheControl, "no-store")
+		return c.Next()
+	})
 	e := &enrutador{api: app.Group("/api"), auth: middleware.RequireAuth(h.MiddlewareDeps()), mwCompleta: middleware.RequireCompleta()}
 
 	// Fuerza bruta: 10 intentos por minuto e IP en login y MFA (desactivado en pruebas).
@@ -222,6 +244,7 @@ func NuevaApp(h *controllers.Controllers) (*fiber.App, []Registro) {
 	// ---------------------------------------------------------------- Etapa 6
 	// Inventario (RF-14): stock = suma de movimientos; descargo automático al registrar un procedimiento.
 	e.permiso("GET", "/inventario/ubicaciones", p(permisos.InventarioLeer), h.ListarUbicaciones)
+	e.permiso("POST", "/inventario/ubicaciones", p(permisos.InventarioConfigurar), h.CrearUbicacion)
 	e.permiso("GET", "/inventario/insumos", p(permisos.InventarioLeer), h.ListarInsumos)
 	e.permiso("POST", "/inventario/insumos", p(permisos.InventarioConfigurar), h.CrearInsumo)
 	e.permiso("PATCH", "/inventario/insumos/:id", p(permisos.InventarioConfigurar), h.ActualizarInsumo)
