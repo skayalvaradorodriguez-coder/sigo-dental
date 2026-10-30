@@ -10,6 +10,8 @@
 //     cada clínica debe usar los que apruebe su asesoría jurídica.
 //   - Caja (Etapa 5): una caja de ayer, ya cerrada, con un faltante de 1.00 en efectivo para que
 //     el Auditor la concilie (sólo si aún no hay cajas). Comprobantes del proveedor SIMULADO.
+//   - Inventario y honorarios (Etapa 6): ubicaciones, 12 insumos con stock inicial, recetas de
+//     consumo y tres reglas de honorarios de ejemplo (sólo si aún no hay ubicaciones). Costos ficticios.
 package semilla
 
 import (
@@ -83,7 +85,10 @@ func Cargar(ctx context.Context, pool *pgxpool.Pool, resetUsuarios bool, zona *t
 	if err := cargarPlanes(ctx, pool); err != nil {
 		return err
 	}
-	return cargarCaja(ctx, pool)
+	if err := cargarCaja(ctx, pool); err != nil {
+		return err
+	}
+	return cargarInventario(ctx, pool)
 }
 
 func idUsuario(ctx context.Context, pool *pgxpool.Pool, email string) (id string) {
@@ -505,6 +510,110 @@ func cargarCaja(ctx context.Context, pool *pgxpool.Pool) error {
 		declarado_efectivo=94.00, declarado_tarjeta=15.00, declarado_transferencia=0, teorico_efectivo=95.00, teorico_tarjeta=15.00, teorico_transferencia=0
 		WHERE id=$1`, sesion); err != nil {
 		return err
+	}
+	return tx.Commit(ctx)
+}
+
+// cargarInventario (Etapa 6): ubicaciones, insumos, stock inicial, recetas de consumo y reglas de honorarios.
+func cargarInventario(ctx context.Context, pool *pgxpool.Pool) error {
+	var n int
+	if err := pool.QueryRow(ctx, `SELECT count(*) FROM inventario_ubicaciones`).Scan(&n); err != nil || n > 0 {
+		return err
+	}
+	asis, aud := idUsuario(ctx, pool, "asistente@demo.sigo"), idUsuario(ctx, pool, "auditor@demo.sigo")
+	if asis == "" || aud == "" {
+		return nil
+	}
+	tx, err := pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	ubic := map[string]string{}
+	var bodega string
+	if err := tx.QueryRow(ctx, `INSERT INTO inventario_ubicaciones (nombre, por_defecto) VALUES ('Bodega central', true) RETURNING id`).Scan(&bodega); err != nil {
+		return err
+	}
+	ubic["BOD"] = bodega
+	for _, c := range []string{"Consultorio 1", "Consultorio 2"} {
+		var id string
+		if err := tx.QueryRow(ctx, `INSERT INTO inventario_ubicaciones (nombre, consultorio_id) SELECT $1::text, id FROM consultorios WHERE nombre = $1::text RETURNING id`, c).Scan(&id); err != nil {
+			return err
+		}
+		ubic[c] = id
+	}
+	insumos := []struct {
+		cod, nom, uni, costo, min string
+		bodega, c1, c2            string
+	}{
+		{"GUA-01", "Guantes de nitrilo (par)", "par", "0.18", "50", "300", "40", "40"},
+		{"ANE-01", "Anestesia lidocaína 2 % (carpule)", "carpule", "0.85", "20", "100", "15", "15"},
+		{"AGU-01", "Aguja dental corta", "unidad", "0.12", "30", "150", "20", "20"},
+		{"RES-A2", "Resina compuesta A2", "g", "1.60", "10", "40", "6", "4"},
+		{"ADH-01", "Adhesivo universal", "ml", "4.20", "5", "20", "3", "3"},
+		{"GRA-01", "Ácido grabador 37 %", "ml", "0.90", "5", "30", "5", "5"},
+		{"PAS-01", "Pasta profiláctica", "g", "0.08", "50", "400", "60", "60"},
+		{"SEL-01", "Sellante de fosas y fisuras", "ml", "3.50", "3", "8", "2", "2"},
+		{"LIM-01", "Lima endodóntica tipo K", "unidad", "1.10", "10", "30", "6", "6"},
+		{"GAS-01", "Gasa estéril", "unidad", "0.05", "100", "500", "60", "60"},
+		{"SUT-01", "Sutura 3-0", "unidad", "2.40", "5", "2", "1", "1"}, // bajo el mínimo: aparece la alerta
+		{"HIP-01", "Hipoclorito de sodio 2,5 %", "ml", "0.01", "500", "2000", "300", "300"},
+	}
+	ins := map[string]string{}
+	for _, x := range insumos {
+		var id string
+		if err := tx.QueryRow(ctx, `INSERT INTO insumos (codigo, nombre, unidad, costo_unitario, stock_minimo) VALUES ($1,$2,$3,$4,$5) RETURNING id`,
+			x.cod, x.nom, x.uni, x.costo, x.min).Scan(&id); err != nil {
+			return err
+		}
+		ins[x.cod] = id
+		for u, q := range map[string]string{"BOD": x.bodega, "Consultorio 1": x.c1, "Consultorio 2": x.c2} {
+			if _, err := tx.Exec(ctx, `INSERT INTO movimientos_stock (insumo_id, ubicacion_id, tipo, cantidad, costo_unitario, motivo, registrado_por, registrado_en)
+				VALUES ($1,$2,'ENTRADA',$3,$4,'Stock inicial (datos ficticios)',$5, now() - interval '7 days')`, id, ubic[u], q, x.costo, asis); err != nil {
+				return err
+			}
+		}
+	}
+	recetas := map[string][][2]string{
+		"VAL-01": {{"GUA-01", "1"}},
+		"PRO-01": {{"GUA-01", "1"}, {"PAS-01", "5"}},
+		"RES-01": {{"GUA-01", "1"}, {"ANE-01", "1"}, {"AGU-01", "1"}, {"RES-A2", "0.3"}, {"ADH-01", "0.1"}, {"GRA-01", "0.2"}},
+		"END-01": {{"GUA-01", "2"}, {"ANE-01", "2"}, {"AGU-01", "2"}, {"LIM-01", "3"}, {"HIP-01", "20"}, {"GAS-01", "4"}},
+		"EXO-01": {{"GUA-01", "1"}, {"ANE-01", "2"}, {"AGU-01", "1"}, {"GAS-01", "6"}, {"SUT-01", "1"}},
+		"SEL-01": {{"GUA-01", "1"}, {"GRA-01", "0.2"}, {"SEL-01", "0.2"}},
+	}
+	for proc, lineas := range recetas {
+		for _, l := range lineas {
+			if _, err := tx.Exec(ctx, `INSERT INTO recetas_consumo (procedimiento_id, insumo_id, cantidad) SELECT id, $2, $3 FROM procedimientos WHERE codigo=$1`,
+				proc, ins[l[0]], l[1]); err != nil {
+				return err
+			}
+		}
+	}
+	valeria, jorge := idUsuario(ctx, pool, "odontologo@demo.sigo"), idUsuario(ctx, pool, "odontologo2@demo.sigo")
+	reglas := []struct {
+		odo, proc, tipo, valor string
+	}{
+		{"", "", "PORCENTAJE", "40"},                 // general: 40 % de lo cobrado
+		{valeria, "END-01", "PORCENTAJE_NETO", "50"}, // Dra. Ríos en endodoncia: 50 % del neto
+		{jorge, "PRO-01", "MONTO_FIJO", "12.00"},     // Dr. Andrade en profilaxis: 12.00 fijo
+	}
+	for _, r := range reglas {
+		var odo, proc *string
+		if r.odo != "" {
+			odo = &r.odo
+		}
+		if r.proc != "" {
+			var id string
+			if err := tx.QueryRow(ctx, `SELECT id FROM procedimientos WHERE codigo=$1`, r.proc).Scan(&id); err != nil {
+				return err
+			}
+			proc = &id
+		}
+		if _, err := tx.Exec(ctx, `INSERT INTO reglas_honorario (odontologo_id, procedimiento_id, tipo, valor, vigente_desde, creado_por) VALUES ($1,$2,$3,$4,'2026-01-01',$5)`,
+			odo, proc, r.tipo, r.valor, aud); err != nil {
+			return err
+		}
 	}
 	return tx.Commit(ctx)
 }

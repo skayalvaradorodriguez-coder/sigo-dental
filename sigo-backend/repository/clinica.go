@@ -251,18 +251,45 @@ func (r *Postgres) AgregarAdendaNota(ctx context.Context, notaID, autorID, texto
 type NuevoRealizado struct {
 	PacienteID, ProcedimientoID, OdontologoID string
 	CitaID, Observaciones, TareaID            *string
+	UbicacionID                               *string // inventario: dónde se descargan los insumos (opcional)
 	Diente                                    *int
 	Superficies                               []string
 	RealizadoEn                               time.Time
 	Hash                                      string
 }
 
+// RegistrarRealizado guarda el procedimiento y, en la MISMA transacción, descarga los insumos de su
+// receta de consumo (RF-14): si algo falla, no queda ni el registro ni el descargo. La ubicación es la
+// indicada, la del consultorio de la cita o la ubicación por defecto; sin inventario configurado no
+// se descarga nada. El stock puede quedar negativo (no se bloquea un registro clínico): se alerta.
 func (r *Postgres) RegistrarRealizado(ctx context.Context, n NuevoRealizado) (string, error) {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return "", err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
 	var id string
-	err := r.pool.QueryRow(ctx, `INSERT INTO procedimientos_realizados (paciente_id, procedimiento_id, cita_id, diente, superficies,
+	err = tx.QueryRow(ctx, `INSERT INTO procedimientos_realizados (paciente_id, procedimiento_id, cita_id, diente, superficies,
 		observaciones, odontologo_id, realizado_en, hash_firma, tarea_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
 		n.PacienteID, n.ProcedimientoID, n.CitaID, n.Diente, n.Superficies, n.Observaciones, n.OdontologoID, n.RealizadoEn, n.Hash, n.TareaID).Scan(&id)
-	return id, traducir(err)
+	if err != nil {
+		return "", traducir(err)
+	}
+	if _, err := tx.Exec(ctx, `WITH u AS (
+			SELECT COALESCE(
+				(SELECT id FROM inventario_ubicaciones WHERE id = $3::uuid AND activo),
+				(SELECT iu.id FROM citas c JOIN sillones s ON s.id = c.sillon_id JOIN inventario_ubicaciones iu ON iu.consultorio_id = s.consultorio_id AND iu.activo WHERE c.id = $4::uuid),
+				(SELECT id FROM inventario_ubicaciones WHERE por_defecto AND activo)) AS id)
+		INSERT INTO movimientos_stock (insumo_id, ubicacion_id, tipo, cantidad, costo_unitario, procedimiento_realizado_id, registrado_por)
+		SELECT rc.insumo_id, u.id, 'SALIDA_PROCEDIMIENTO', -rc.cantidad, i.costo_unitario, $1, $5
+		FROM recetas_consumo rc JOIN insumos i ON i.id = rc.insumo_id AND i.activo, u
+		WHERE rc.procedimiento_id = $2 AND u.id IS NOT NULL`, id, n.ProcedimientoID, n.UbicacionID, n.CitaID, n.OdontologoID); err != nil {
+		return "", traducir(err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return "", traducir(err)
+	}
+	return id, nil
 }
 
 func (r *Postgres) RealizadosPaciente(ctx context.Context, pacienteID string) ([]models.ProcedimientoRealizado, error) {

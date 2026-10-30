@@ -133,7 +133,7 @@ func NuevaApp(h *controllers.Controllers) (*fiber.App, []Registro) {
 	e.permiso("POST", "/auditoria/verificar", p(permisos.AuditoriaLeer), h.VerificarAuditoria)
 
 	// ---------------------------------------------------------------- Etapa 2
-	lectoresCatalogo := p(permisos.CatalogosGestionar, permisos.CitasLeer, permisos.PacientesLeer)
+	lectoresCatalogo := p(permisos.CatalogosGestionar, permisos.CitasLeer, permisos.PacientesLeer, permisos.InventarioLeer, permisos.HonorariosTodos)
 	e.alguno("GET", "/catalogos/estructura", lectoresCatalogo, h.Estructura)
 	e.alguno("GET", "/catalogos/sillones", lectoresCatalogo, h.Sillones)
 	e.alguno("GET", "/catalogos/procedimientos", lectoresCatalogo, h.ListarProcedimientos)
@@ -218,6 +218,26 @@ func NuevaApp(h *controllers.Controllers) (*fiber.App, []Registro) {
 	e.permiso("GET", "/caja/cierres/:id", p(permisos.CajaRevisar), h.ObtenerCierre)
 	e.permiso("POST", "/caja/cierres/:id/revisar", p(permisos.CajaRevisar), h.RevisarCierre)
 	e.permiso("GET", "/caja/cuentas-por-cobrar", p(permisos.CajaRevisar), h.CuentasPorCobrar)
+
+	// ---------------------------------------------------------------- Etapa 6
+	// Inventario (RF-14): stock = suma de movimientos; descargo automático al registrar un procedimiento.
+	e.permiso("GET", "/inventario/ubicaciones", p(permisos.InventarioLeer), h.ListarUbicaciones)
+	e.permiso("GET", "/inventario/insumos", p(permisos.InventarioLeer), h.ListarInsumos)
+	e.permiso("POST", "/inventario/insumos", p(permisos.InventarioConfigurar), h.CrearInsumo)
+	e.permiso("PATCH", "/inventario/insumos/:id", p(permisos.InventarioConfigurar), h.ActualizarInsumo)
+	e.permiso("GET", "/inventario/stock", p(permisos.InventarioLeer), h.Stock)
+	e.permiso("GET", "/inventario/movimientos", p(permisos.InventarioLeer), h.Kardex)
+	e.permiso("POST", "/inventario/movimientos", p(permisos.InventarioEscribir), h.RegistrarMovimiento)
+	e.permiso("GET", "/inventario/recetas", p(permisos.InventarioLeer), h.RecetasConsumo)
+	e.permiso("PUT", "/inventario/recetas/:procedimientoId", p(permisos.InventarioConfigurar), h.GuardarReceta)
+	// Honorarios (RF-13): el odontólogo ve lo suyo; el Auditor configura reglas y liquida.
+	honorarios := p(permisos.HonorariosPropios, permisos.HonorariosTodos)
+	e.alguno("GET", "/honorarios/reglas", p(permisos.HonorariosPropios, permisos.HonorariosTodos, permisos.HonorariosConfigurar), h.ListarReglas)
+	e.permiso("POST", "/honorarios/reglas", p(permisos.HonorariosConfigurar), h.CrearRegla)
+	e.alguno("GET", "/honorarios/calculo", honorarios, h.CalcularHonorarios)
+	e.alguno("GET", "/honorarios/liquidaciones", honorarios, h.ListarLiquidaciones)
+	e.alguno("GET", "/honorarios/liquidaciones/:id", honorarios, h.ObtenerLiquidacion)
+	e.permiso("POST", "/honorarios/liquidaciones", p(permisos.HonorariosTodos), h.CrearLiquidacion)
 
 	// Cualquier otra ruta /api → 404 JSON.
 	app.Use("/api", func(c *fiber.Ctx) error {
