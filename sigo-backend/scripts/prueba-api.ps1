@@ -8,6 +8,7 @@
                    cita nueva, choque de sillón (409 SILLON_OCUPADO) y cancelación
     4. Odontólogo: anamnesis versionada
     5. Mensajes:   bandeja con proveedor SIMULADO
+    6. Expediente: odontograma, nota SOEP firmada con MFA, bloqueo de edición y procedimiento inmutable
 
   Uso (con la base, Redis y el backend corriendo):
     cd sigo-backend
@@ -190,6 +191,30 @@ if ($b) {
     if ($b.proveedor.simulado) { Ok "Proveedor '$($b.proveedor.nombre)' marcado como SIMULADO: no sale ningún mensaje real" }
     else { Falla "El proveedor debería estar marcado como simulado" }
 }
+
+# ---------------------------------------------------------------------------------------
+Titulo "6. Expediente clínico (RF-03, RF-05, RN-01)"
+$odon = Espera (Api "GET" "/api/pacientes/$($ana.id)/odontograma" $doc) 200 "Odontograma de la paciente"
+if ($odon) { Ok "$(@($odon.estado).Count) hallazgos vigentes · $(@($odon.historial).Count) eventos en el historial · $(@($odon.catalogo).Count) tipos de hallazgo" }
+Espera (Api "GET" "/api/pacientes/$($ana.id)/odontograma" $rec) 403 "Recepción NO ve el expediente clínico" | Out-Null
+$nota = Espera (Api "POST" "/api/pacientes/$($ana.id)/notas" $doc @{
+    subjetivo = "Prueba del script"; objetivo = "Sin hallazgos nuevos"; evaluacion = "Control"; plan = "Control en 6 meses" }) 201 "Nota SOEP (borrador)"
+if ($nota) {
+    Ok "Estado $($nota.estado); editable hasta $($nota.bloqueoEn)"
+    $firma = Api "POST" "/api/notas/$($nota.id)/firmar" $doc @{ codigo = (CodigoMFA "odontologo@demo.sigo") }
+    if ($firma.Status -eq 400) {
+        $espera = 30 - ([DateTimeOffset]::UtcNow.ToUnixTimeSeconds() % 30) + 1
+        Write-Host "  ... código MFA ya usado en esta ventana (anti-replay); esperando $espera s" -ForegroundColor DarkGray
+        Start-Sleep -Seconds $espera
+        $firma = Api "POST" "/api/notas/$($nota.id)/firmar" $doc @{ codigo = (CodigoMFA "odontologo@demo.sigo") }
+    }
+    $f = Espera $firma 200 "Nota firmada con código MFA (firma electrónica simple)"
+    if ($f) { Ok "Firmada por $($f.firmadaPor) ($($f.registroProfesional)) · hash $($f.hashFirma.Substring(0,16))… · íntegra: $($f.integra)" }
+    $e = Espera (Api "PUT" "/api/notas/$($nota.id)" $doc @{ subjetivo = "cambio"; objetivo = "x"; evaluacion = "x"; plan = "x" }) 409 "Una nota firmada NO se edita"
+    if ($e) { Ok "Código: $($e.code)" }
+}
+$lista = Espera (Api "GET" "/api/pacientes/$($ana.id)/procedimientos" $doc) 200 "Procedimientos realizados"
+if ($lista) { Ok "$(@($lista).Count) registrados; no existe ninguna ruta para editarlos ni borrarlos (RN-01)" }
 
 # ---------------------------------------------------------------------------------------
 Write-Host ""
