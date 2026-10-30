@@ -11,3 +11,7 @@ procedimientos      726 ms    836 ms   (300 registros)
 
 Criterio: < 1 500 ms → CUMPLE en Chromium. Firefox y WebKit: se ejecutan en la integración continua
 (.github/workflows/ci.yml, trabajo "navegadores"); aquí no pudieron instalarse.
+
+Nota (30-oct-2026): la primera corrida en el PC de desarrollo usó el servidor de Vite (localhost:5173,
+módulos sin empaquetar) y dio 1,9–4,3 s. Esa medición no es válida para RNF-01: medir.ps1 ahora mide
+contra la build de producción servida por la API (como en Render). Repetido así en Chromium: máx 887 ms.
