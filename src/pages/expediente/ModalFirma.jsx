@@ -4,6 +4,7 @@ import { PenLine } from "lucide-react";
 import { useState } from "react";
 import { Alert, Button, Input, Modal, Textarea } from "../../components/ui";
 import { mensajeDe } from "../../services/http";
+import CodigoDemo from "../../components/CodigoDemo";
 
 const ModalFirma = ({ titulo, descripcion, conTexto, etiquetaTexto = "Texto de la adenda", alFirmar, alCerrar }) => {
   const [codigo, setCodigo] = useState("");
@@ -45,6 +46,7 @@ const ModalFirma = ({ titulo, descripcion, conTexto, etiquetaTexto = "Texto de l
           className="[&_input]:text-center [&_input]:font-mono [&_input]:text-lg [&_input]:tracking-[0.3em]"
           autoFocus={!conTexto}
         />
+        <CodigoDemo alObtener={setCodigo} />
         <p className="text-xs text-muted">
           Firma electrónica simple: confirma su identidad con el código y se guarda una huella (hash SHA-256) del
           contenido con fecha, hora y su registro profesional. Lo firmado ya no se modifica; las correcciones se hacen

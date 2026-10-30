@@ -4,6 +4,7 @@ import { KeyRound, LockKeyhole, ShieldCheck, Smartphone } from "lucide-react";
 import QRCode from "qrcode";
 import { useEffect, useState } from "react";
 import { Alert, Button, Input, Spinner } from "../../components/ui";
+import CodigoDemo from "../../components/CodigoDemo";
 import { useAuth } from "../../context/useAuth";
 import * as auth from "../../services/authService";
 import { mensajeDe } from "../../services/http";
@@ -150,31 +151,6 @@ const FormularioCodigo = ({ alEnviar, texto }) => {
   );
 };
 
-// Despliegue de demostración (APP_ENV=demo): ofrece el código vigente del usuario ficticio para que
-// los evaluadores ingresen sin app autenticadora. En producción la ruta no existe y no se muestra nada.
-const CodigoDemo = () => {
-  const [hay, setHay] = useState(false);
-  const [dato, setDato] = useState(null);
-  useEffect(() => {
-    auth.estado().then((r) => setHay(Boolean(r?.demo)), () => {});
-  }, []);
-  if (!hay) return null;
-  return (
-    <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
-      <p>Demostración con datos ficticios: no necesita app autenticadora.</p>
-      {dato ? (
-        <p className="mt-1">
-          Código: <strong className="font-mono text-base">{dato.codigo}</strong> (vale {dato.segundos} s)
-        </p>
-      ) : (
-        <button className="mt-1 font-medium underline" onClick={() => auth.codigoDemo().then(setDato, () => {})}>
-          Mostrar código de demostración
-        </button>
-      )}
-    </div>
-  );
-};
-
 export const VerificarMFA = () => {
   const { aplicarSesion } = useAuth();
   return (
@@ -184,7 +160,9 @@ export const VerificarMFA = () => {
       subtitulo="Abra su aplicación autenticadora e ingrese el código de 6 dígitos de SIGO-Dental."
     >
       <FormularioCodigo texto="Verificar" alEnviar={async (c) => aplicarSesion(await auth.verificarMFA(c))} />
-      <CodigoDemo />
+      <div className="mt-4">
+        <CodigoDemo />
+      </div>
     </Marco>
   );
 };
