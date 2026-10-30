@@ -23,6 +23,13 @@ export const ETIQUETA_ACCION = {
   CREACION: "Creación",
   MODIFICACION: "Modificación",
   AUDITORIA_VERIFICADA: "Verificación de bitácora",
+  FIRMA: "Firma",
+  FIRMA_FALLIDA: "Firma fallida",
+  ADENDA: "Adenda",
+  DESCUENTO_AUTORIZADO: "Descuento autorizado",
+  PRESENTACION: "Presupuesto presentado",
+  DECISION: "Decisión del paciente",
+  ARCHIVO_ALTERADO: "Archivo alterado",
 };
 
 export const ESTADOS_CITA = [
@@ -92,4 +99,29 @@ export const TONO_NOTIFICACION = {
   FALLIDO: "danger",
   CANCELADO: "neutral",
   OMITIDO: "warn",
+};
+
+// Etapa 4
+export const ETIQUETA_PRESUPUESTO = {
+  BORRADOR: "Borrador",
+  PRESENTADO: "Presentado al paciente",
+  APROBADO: "Aprobado",
+  APROBADO_PARCIAL: "Aprobado parcialmente",
+  RECHAZADO: "Rechazado",
+};
+export const TONO_PRESUPUESTO = {
+  BORRADOR: "neutral",
+  PRESENTADO: "brand",
+  APROBADO: "ok",
+  APROBADO_PARCIAL: "warn",
+  RECHAZADO: "danger",
+};
+export const ETIQUETA_TAREA = { PENDIENTE: "Por agendar", AGENDADA: "Agendada", REALIZADA: "Realizada" };
+export const TONO_TAREA = { PENDIENTE: "warn", AGENDADA: "brand", REALIZADA: "ok" };
+export const ETIQUETA_METODO_FIRMA = { MANUSCRITA: "Firma en pantalla", OTP: "Código enviado (OTP)" };
+export const ETIQUETA_CATEGORIA_ARCHIVO = {
+  RADIOGRAFIA: "Radiografía",
+  FOTOGRAFIA: "Fotografía",
+  DOCUMENTO: "Documento",
+  OTRO: "Otro",
 };

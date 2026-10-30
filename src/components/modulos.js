@@ -16,7 +16,7 @@ import {
   Users,
 } from "lucide-react";
 
-export const ETAPA_ACTUAL = 3;
+export const ETAPA_ACTUAL = 4;
 
 export const MODULOS = [
   { ruta: "/", etiqueta: "Panel", icono: LayoutDashboard, permisos: [], grupo: "principal", etapa: 1 },
@@ -64,12 +64,12 @@ export const MODULOS = [
     ruta: "/consentimientos",
     etiqueta: "Consentimientos",
     icono: ClipboardSignature,
-    permisos: ["consentimientos.gestionar", "clinica.leer"],
+    permisos: ["consentimientos.gestionar", "catalogos.gestionar"],
     grupo: "principal",
     etapa: 4,
     requisitos: "RF-06",
     resumen:
-      "Plantillas de consentimiento por procedimiento, firma manuscrita digitalizada u OTP y documento inmutable con sello de tiempo.",
+      "Plantillas versionadas por procedimiento, firma en pantalla (imagen del trazo) u OTP y documento inmutable con huella SHA-256.",
   },
   {
     ruta: "/caja",

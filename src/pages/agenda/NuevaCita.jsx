@@ -1,7 +1,7 @@
 // Nueva cita (RF-09). Si el sillón está ocupado, el backend responde 409 SILLON_OCUPADO con la cita
 // en conflicto (extra.conflicto) y aquí se muestra cuál es.
 import { Search, X } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AlertasMedicas } from "../../components/AlertasMedicas";
 import { Alert, Button, Input, Modal, Select, Textarea } from "../../components/ui";
 import { useApi } from "../../hooks/useApi";
@@ -9,6 +9,7 @@ import { getProcedimientos } from "../../services/catalogosService";
 import { crearCita } from "../../services/citasService";
 import { mensajeDe } from "../../services/http";
 import { buscarPacientes, getPaciente } from "../../services/pacientesService";
+import { getTareas } from "../../services/planesService";
 import { combinar, fechaISO, fmtFechaHora, horaMin } from "../../utils/fechas";
 
 const SelectorPaciente = ({ valor, alCambiar }) => {
@@ -102,6 +103,7 @@ const NuevaCita = ({ inicial, sillones, odontologos, alCerrar, alCrear }) => {
     hora: horaMin(inicial.fecha),
     duracionMin: 30,
     motivo: "",
+    tareaId: inicial.tareaId ?? "",
   });
   const [error, setError] = useState("");
   const [conflicto, setConflicto] = useState(null);
@@ -114,6 +116,33 @@ const NuevaCita = ({ inicial, sillones, odontologos, alCerrar, alCrear }) => {
       .then(setPaciente)
       .catch(() => {});
   }, [inicial.pacienteId]);
+
+  // Tareas pendientes del tratamiento aprobado (RF-08): al elegir una, la cita toma su procedimiento.
+  const pacienteId = paciente?.id;
+  const tareas = useApi(
+    useCallback(() => (pacienteId ? getTareas(pacienteId).catch(() => []) : Promise.resolve([])), [pacienteId]),
+  );
+  const pendientes = (tareas.data ?? []).filter((t) => t.estado === "PENDIENTE");
+  const elegirTarea = (id) => {
+    const t = pendientes.find((x) => x.id === id);
+    setF((prev) => ({
+      ...prev,
+      tareaId: id,
+      ...(t
+        ? { procedimientoId: t.procedimientoId, duracionMin: t.duracionMin, motivo: prev.motivo || t.presupuesto }
+        : {}),
+    }));
+  };
+  // Al llegar con ?tarea=, se aplica una sola vez en cuanto cargan las tareas del paciente.
+  const precargada = useRef(!inicial.tareaId);
+  useEffect(() => {
+    if (precargada.current) return;
+    const t = (tareas.data ?? []).find((x) => x.id === inicial.tareaId && x.estado === "PENDIENTE");
+    if (!t) return;
+    precargada.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- precarga única de la tarea indicada en la URL
+    setF((prev) => ({ ...prev, tareaId: t.id, procedimientoId: t.procedimientoId, duracionMin: t.duracionMin }));
+  }, [tareas.data, inicial.tareaId]);
 
   const enviar = async (e) => {
     e.preventDefault();
@@ -131,6 +160,7 @@ const NuevaCita = ({ inicial, sillones, odontologos, alCerrar, alCrear }) => {
         odontologoId: f.odontologoId,
         sillonId: f.sillonId,
         procedimientoId: f.procedimientoId,
+        tareaId: f.tareaId,
         inicio: combinar(f.fecha, f.hora).toISOString(),
         duracionMin: Number(f.duracionMin),
         motivo: f.motivo.trim(),
@@ -154,7 +184,28 @@ const NuevaCita = ({ inicial, sillones, odontologos, alCerrar, alCrear }) => {
               : error}
           </Alert>
         )}
-        <SelectorPaciente valor={paciente} alCambiar={setPaciente} />
+        <SelectorPaciente
+          valor={paciente}
+          alCambiar={(p) => {
+            setPaciente(p);
+            setF((prev) => ({ ...prev, tareaId: "" }));
+          }}
+        />
+        {pendientes.length > 0 && (
+          <Select
+            label="Tarea del tratamiento aprobado (opcional)"
+            value={f.tareaId}
+            onChange={(e) => elegirTarea(e.target.value)}
+          >
+            <option value="">Cita sin tarea del presupuesto</option>
+            {pendientes.map((t) => (
+              <option key={t.id} value={t.id}>
+                Fase {t.fase} · S{t.sesion} · {t.procedimiento}
+                {t.diente ? ` · diente ${t.diente}` : ""}
+              </option>
+            ))}
+          </Select>
+        )}
         <div className="grid gap-3 sm:grid-cols-2">
           <Select
             label="Odontólogo"
@@ -181,6 +232,7 @@ const NuevaCita = ({ inicial, sillones, odontologos, alCerrar, alCrear }) => {
               const p = procedimientos.data?.find((x) => x.id === e.target.value);
               setF({ ...f, procedimientoId: e.target.value, duracionMin: p?.duracionMin ?? f.duracionMin });
             }}
+            disabled={!!f.tareaId}
             className="sm:col-span-2"
           >
             <option value="">Sin procedimiento definido</option>

@@ -13,7 +13,11 @@ import { fmtFechaHora, sumarDias } from "../../utils/fechas";
 import NotasSOEP from "../expediente/NotasSOEP";
 import Odontograma from "../expediente/Odontograma";
 import Periodontograma from "../expediente/Periodontograma";
+import Archivos from "../expediente/Archivos";
 import Procedimientos from "../expediente/Procedimientos";
+import Recetas from "../expediente/Recetas";
+import ConsentimientosPaciente from "../consentimientos/ConsentimientosPaciente";
+import PresupuestosPaciente from "../presupuestos/PresupuestosPaciente";
 import PanelAnamnesis from "./PanelAnamnesis";
 
 const Campo = ({ etiqueta, valor }) => (
@@ -89,6 +93,16 @@ const FichaPaciente = () => {
           { id: "periodontograma", label: "Periodontograma" },
           { id: "evolucion", label: "Evolución (SOEP)" },
           { id: "procedimientos", label: "Procedimientos" },
+        ]
+      : []),
+    ...(puede("presupuestos.leer") ? [{ id: "presupuestos", label: "Presupuestos" }] : []),
+    ...(puede("consentimientos.gestionar", "clinica.leer")
+      ? [{ id: "consentimientos", label: "Consentimientos" }]
+      : []),
+    ...(puede("clinica.leer")
+      ? [
+          { id: "recetas", label: "Recetas" },
+          { id: "archivos", label: "Archivos" },
         ]
       : []),
     ...(puede("citas.leer") ? [{ id: "citas", label: "Citas" }] : []),
@@ -191,6 +205,12 @@ const FichaPaciente = () => {
       {puede("clinica.leer") && pestana === "periodontograma" && <Periodontograma paciente={p} />}
       {puede("clinica.leer") && pestana === "evolucion" && <NotasSOEP paciente={p} />}
       {puede("clinica.leer") && pestana === "procedimientos" && <Procedimientos paciente={p} />}
+      {puede("presupuestos.leer") && pestana === "presupuestos" && <PresupuestosPaciente paciente={p} />}
+      {puede("consentimientos.gestionar", "clinica.leer") && pestana === "consentimientos" && (
+        <ConsentimientosPaciente paciente={p} />
+      )}
+      {puede("clinica.leer") && pestana === "recetas" && <Recetas paciente={p} />}
+      {puede("clinica.leer") && pestana === "archivos" && <Archivos paciente={p} />}
     </div>
   );
 };
