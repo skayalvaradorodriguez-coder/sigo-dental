@@ -44,3 +44,14 @@ func TestDemoExigeLoMismoQueProduccion(t *testing.T) {
 		t.Fatalf("demo válida: %v", err)
 	}
 }
+
+func TestRedisURL(t *testing.T) {
+	t.Setenv("CLINIC_TIMEZONE", "America/Guayaquil")
+	t.Setenv("REDIS_URL", "redis://red-abc123:6379")
+	t.Setenv("DATABASE_URL", "postgres://u:p@host/db")
+	t.Setenv("JWT_SECRET", strings.Repeat("x", 48))
+	c, err := Cargar("no-existe.env")
+	if err != nil || c.RedisAddr != "red-abc123:6379" || c.RedisDB != 0 {
+		t.Fatalf("REDIS_URL: %v %+v", err, c.RedisAddr)
+	}
+}
