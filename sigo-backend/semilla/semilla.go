@@ -3,6 +3,8 @@
 //     (secreto aleatorio; código vigente con `go run . totp <correo>`). Los existentes NO se
 //     modifican, salvo con `go run . semilla --reset-usuarios`.
 //   - Clínica (Etapa 2): sólo si aún no hay sedes.
+//   - Expediente (Etapa 3): odontograma, periodontograma y una nota en borrador de Ana Torres,
+//     sólo si aún no hay registros de odontograma.
 package semilla
 
 import (
@@ -66,7 +68,10 @@ func Cargar(ctx context.Context, pool *pgxpool.Pool, resetUsuarios bool, zona *t
 			return err
 		}
 	}
-	return cargarClinica(ctx, pool, zona)
+	if err := cargarClinica(ctx, pool, zona); err != nil {
+		return err
+	}
+	return cargarExpediente(ctx, pool)
 }
 
 func idUsuario(ctx context.Context, pool *pgxpool.Pool, email string) (id string) {
@@ -253,6 +258,75 @@ func cargarClinica(ctx context.Context, pool *pgxpool.Pool, zona *time.Location)
 				return err
 			}
 		}
+	}
+	return tx.Commit(ctx)
+}
+
+// cargarExpediente (Etapa 3): datos clínicos de ejemplo para la paciente DEMO000101 (ficticia).
+// No se crean notas firmadas ni procedimientos realizados: esos se firman con el código MFA real.
+func cargarExpediente(ctx context.Context, pool *pgxpool.Pool) error {
+	var n int
+	if err := pool.QueryRow(ctx, `SELECT count(*) FROM odontograma_eventos`).Scan(&n); err != nil || n > 0 {
+		return err
+	}
+	var paciente string
+	if err := pool.QueryRow(ctx, `SELECT id FROM pacientes WHERE numero_documento='DEMO000101'`).Scan(&paciente); err != nil {
+		return nil // sin la clínica demo no hay expediente demo
+	}
+	valeria := idUsuario(ctx, pool, "odontologo@demo.sigo")
+	tx, err := pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	marcas := []struct {
+		diente      int
+		sup, hallaz string
+	}{
+		{16, "O", "CARIES"}, {16, "M", "CARIES"}, {26, "O", "RESTAURACION"}, {36, "O", "RESTAURACION"}, {36, "D", "RESTAURACION"},
+		{46, "", "ENDODONCIA_REALIZADA"}, {46, "", "PROTESIS_FIJA"}, {18, "", "AUSENTE"}, {38, "", "EXODONCIA_INDICADA"},
+		{11, "O", "CARIES"}, {47, "O", "SELLANTE"}, {25, "", "ENDODONCIA_REQUERIDA"},
+	}
+	for _, m := range marcas {
+		var sup *string
+		if m.sup != "" {
+			sup = &m.sup
+		}
+		if _, err := tx.Exec(ctx, `INSERT INTO odontograma_eventos (paciente_id, diente, superficie, hallazgo, accion, registrado_por, registrado_en)
+			VALUES ($1,$2,$3,$4,'AGREGAR',$5, now() - interval '30 days')`, paciente, m.diente, sup, m.hallaz, valeria); err != nil {
+			return err
+		}
+	}
+	// Periodontograma de ejemplo (29 dientes presentes); valores ficticios.
+	var perio string
+	if err := tx.QueryRow(ctx, `INSERT INTO periodontogramas (paciente_id, observaciones, registrado_por, registrado_en)
+		VALUES ($1, 'Control periodontal de ejemplo (datos ficticios).', $2, now() - interval '30 days') RETURNING id`, paciente, valeria).Scan(&perio); err != nil {
+		return err
+	}
+	for i, d := range []int{17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37} {
+		mov := 0
+		if d == 46 {
+			mov = 1
+		}
+		if _, err := tx.Exec(ctx, `INSERT INTO perio_dientes (periodontograma_id, diente, ausente, movilidad, furca) VALUES ($1,$2,false,$3,0)`, perio, d, mov); err != nil {
+			return err
+		}
+		for j, sitio := range []string{"MV", "V", "DV", "ML", "L", "DL"} {
+			ps := 2 + (i+j)%3 // 2–4 mm
+			mg := 0
+			if d == 46 && (sitio == "MV" || sitio == "V") {
+				ps, mg = 5, 1
+			}
+			if _, err := tx.Exec(ctx, `INSERT INTO perio_sitios (periodontograma_id, diente, sitio, profundidad, margen, sangrado, supuracion)
+				VALUES ($1,$2,$3,$4,$5,$6,false)`, perio, d, sitio, ps, mg, ps >= 4); err != nil {
+				return err
+			}
+		}
+	}
+	if _, err := tx.Exec(ctx, `INSERT INTO notas_soep (paciente_id, autor_id, subjetivo, objetivo, evaluacion, plan, bloqueo_en)
+		VALUES ($1,$2,'Refiere sensibilidad al frío en el lado superior derecho.','Caries oclusal y mesial en 16; resto sin cambios.',
+		'Caries dentinaria en 16.','Restauración de 16 en la próxima cita. Recordar alergia a penicilina.', now() + interval '24 hours')`, paciente, valeria); err != nil {
+		return err
 	}
 	return tx.Commit(ctx)
 }
