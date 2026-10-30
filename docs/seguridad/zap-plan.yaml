@@ -1,0 +1,35 @@
+env:
+  contexts:
+    - name: sigo
+      urls: ["http://localhost:3000"]
+      includePaths: ["http://localhost:3000.*"]
+  parameters:
+    failOnError: false
+    progressToStdout: true
+jobs:
+  - type: openapi
+    parameters:
+      apiFile: docs/openapi.json
+      targetUrl: http://localhost:3000
+  - type: spider
+    parameters:
+      context: sigo
+      url: http://localhost:3000
+      maxDuration: 2
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 3
+  - type: activeScan
+    parameters:
+      context: sigo
+      maxScanDurationInMins: 15
+  - type: report
+    parameters:
+      template: traditional-json
+      reportDir: docs/seguridad
+      reportFile: zap-informe
+  - type: report
+    parameters:
+      template: traditional-html
+      reportDir: docs/seguridad
+      reportFile: zap-informe

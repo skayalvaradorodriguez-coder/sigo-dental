@@ -1,0 +1,13 @@
+RNF-01 medido en el navegador (Playwright, e2e/rnf01.spec.js), Chromium 1366×768, misma máquina de
+desarrollo (2 vCPU) que la API, la base y el navegador. API sirviendo la build de producción (STATIC_DIR)
+con la CSP estricta. Paciente VOL000001 (10 años de historia). Cada medición: navegación en frío desde
+about:blank hasta que la pestaña muestra su contenido (incluye descargar y ejecutar la app). 5 repeticiones.
+
+Pestaña            mediana   máximo
+odontograma         555 ms    624 ms
+periodontograma     550 ms    616 ms   (20 exámenes, 3 360 sitios)
+evolución SOEP      949 ms   1002 ms   (200 notas)
+procedimientos      726 ms    836 ms   (300 registros)
+
+Criterio: < 1 500 ms → CUMPLE en Chromium. Firefox y WebKit: se ejecutan en la integración continua
+(.github/workflows/ci.yml, trabajo "navegadores"); aquí no pudieron instalarse.

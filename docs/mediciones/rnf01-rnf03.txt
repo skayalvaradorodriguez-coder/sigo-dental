@@ -1,0 +1,27 @@
+Entorno: contenedor Linux de desarrollo, 2 vCPU, 7 GB RAM, PostgreSQL 16 y Redis 7 locales, API compilada (go build). Fecha: 2026-10-30T06:35:50-05:00
+
+RNF-01 — expediente de un paciente con 10 años de historia (VOL000001), 30 repeticiones por pestaña
+Pestaña                            p50       p95       máx    tamaño
+Ficha + anamnesis                 6 ms      8 ms     11 ms        1 KB
+Ficha + odontograma               8 ms      9 ms     10 ms       48 KB
+Ficha + periodontogramas         30 ms     35 ms     42 ms      322 KB
+Ficha + evolución SOEP           10 ms     13 ms     14 ms      257 KB
+Ficha + procedimientos           11 ms     12 ms     15 ms      126 KB
+Ficha + presupuestos              9 ms     11 ms     13 ms       30 KB
+Ficha + citas (±15 días)          5 ms      7 ms      7 ms        0 KB
+Criterio: p95 < 1 500 ms en cada pestaña (sólo servidor y red local; el navegador se mide aparte).
+✔ CUMPLE
+
+RNF-03 — 150 usuarios concurrentes durante 1m0s (pausa de 1 a 3 s entre acciones)
+Acción                    pedidos       p50       p95       p99  errores
+agenda del día                805      3 ms      5 ms      8 ms        0
+búsqueda de pacientes         788      5 ms      8 ms     15 ms        0
+catálogo de sillones          206      1 ms      3 ms      3 ms        0
+ficha del paciente            770      4 ms      7 ms     13 ms        0
+heartbeat                     714      1 ms      3 ms      5 ms        0
+notas SOEP                    508      7 ms     12 ms     15 ms        0
+odontograma                   538      6 ms     10 ms     14 ms        0
+panel                         831      3 ms      8 ms     16 ms        0
+TOTAL: 5160 pedidos (86.0/s) · p50 4 ms · p95 9 ms · p99 14 ms · errores 0.00 %
+Criterio: p95 < 1 500 ms y errores < 1 %.
+✔ CUMPLE
