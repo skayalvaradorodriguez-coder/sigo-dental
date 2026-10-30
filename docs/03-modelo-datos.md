@@ -52,7 +52,27 @@ ALTER TABLE citas ADD CONSTRAINT citas_sin_superposicion_por_sillon
 
 Una goroutine (`notificaciones.Despachador`) revisa cada 30 s los mensajes vencidos con `SELECT … FOR UPDATE SKIP LOCKED` (varias instancias de la API no envían el mismo mensaje dos veces), hasta 3 intentos. Al cancelar una cita, sus mensajes pendientes pasan a CANCELADO; al reprogramarla, se cancelan y se crean de nuevo.
 
-## 3.3 Modelo completo planificado (Etapas 3–6)
+## 3.3 Etapa 3 — `003_clinica.sql`
+
+| Tabla | Propósito | Puntos clave |
+|---|---|---|
+| `odontograma_eventos` | Odontograma (RF-03) | Cada marca es un evento `AGREGAR` / `QUITAR` (sólo inserción). Diente en **FDI** con `CHECK` de permanentes (11–48) y temporales (51–85); superficie canónica `M, D, O, V, L` (O = oclusal/incisal, L = lingual/palatino). El estado vigente se calcula en `domain.EstadoActual`. |
+| `periodontogramas`, `perio_dientes`, `perio_sitios` | Periodontograma (RF-04) | 6 sitios por diente (`MV, V, DV, ML, L, DL`), PS 0–15, MG −10…15, **`nic` columna generada = PS + MG**; movilidad y furca 0–3. Sólo inserción. |
+| `notas_soep` | Evolución SOEP (RF-05) | `bloqueo_en` = creación + `clinica.horasBloqueoNotas`. Firma: `firmada_en`, `firmada_por`, `hash_firma` (los tres o ninguno, por `CHECK`). |
+| `notas_adendas` | Correcciones de notas | Sólo inserción, cada una con su hash. |
+| `procedimientos_realizados` | RN-01 | Firmado al registrarse (`hash_firma`); **sin `UPDATE` ni `DELETE`** (trigger). |
+| `procedimientos_adendas` | Correcciones (RN-01) | Sólo inserción, con hash. |
+
+Guardia de las notas en la BD (`sigo_nota_soep_guardia`):
+
+- `DELETE` siempre rechazado.
+- Nota firmada ⇒ ningún cambio.
+- Paciente, autor, cita y fechas nunca cambian.
+- Vencido `bloqueo_en` ⇒ el texto S/O/E/P no cambia (sólo se admite registrar la firma).
+
+Así, aunque alguien escriba SQL directo, no puede editar una nota fuera de plazo. Y si un administrador de base de datos desactiva el trigger y altera una nota firmada, el hash ya no coincide y la interfaz la marca como **posible alteración** (probado en `TestNotasSOEPFirmaYAdendas`).
+
+## 3.4 Modelo completo planificado (Etapas 4–6)
 
 ```mermaid
 erDiagram
@@ -87,8 +107,6 @@ erDiagram
 
 Reglas previstas en la BD:
 
-- **RN-01 (Etapa 3):** trigger `BEFORE DELETE` en `procedimientos_realizados` y `BEFORE UPDATE` que rechaza cambios en un registro realizado; la corrección es una adenda firmada.
-- **RF-05 (Etapa 3):** trigger que rechaza `UPDATE` de una nota cuando está firmada o `now() >= bloqueo_en`. `bloqueo_en` se calcula al crearla con el valor vigente de `clinica.horasBloqueoNotas` (cambiar el parámetro no reabre notas antiguas).
 - **RN-02 (Etapa 5):** la respuesta del cierre al recepcionista nunca incluye el total teórico; sólo `caja.revisar` (Auditor) lo ve.
 - **RF-14 (Etapa 6):** el descargo de insumos ocurre en la **misma transacción** que marcar el procedimiento como realizado.
 

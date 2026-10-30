@@ -12,7 +12,8 @@ Mismo stack y forma de trabajo que **catalogo-multinivel**: frontend en React + 
 |---|---|---|
 | 1. Base | Login + MFA TOTP, sesiones con cierre por inactividad, roles y permisos, auditoría encadenada, usuarios, parámetros, panel por rol | ✅ |
 | 2. Pacientes y agenda | Catálogos, ficha única con tutor, anamnesis versionada, alertas críticas, agenda día/semana por sillón, 7 estados, recordatorios 48 h/24 h (simulados), sin superposición por sillón | ✅ |
-| 3–7 | Núcleo clínico, presupuestos y consentimientos, caja, inventario y honorarios, calidad y despliegue | Ver `PLAN_IMPLEMENTACION.md` |
+| 3. Núcleo clínico | Odontograma FDI/Universal por superficies, periodontograma con NIC, notas SOEP con bloqueo a las 24 h y firma (código MFA + hash), adendas, procedimientos realizados que no se borran | ✅ |
+| 4–7 | Presupuestos y consentimientos, caja, inventario y honorarios, calidad y despliegue | Ver `PLAN_IMPLEMENTACION.md` |
 
 El detalle requisito por requisito está en `REQUIREMENTS_CHECKLIST.md`.
 
@@ -91,7 +92,7 @@ Para volver a dejar los usuarios como al inicio: `go run . semilla --reset-usuar
 
 ```powershell
 cd sigo-backend
-go test ./...                                   # unitarias + integración (necesita Docker: usa la base sigo_dental_test)
+go test ./...                                   # unitarias + integración (necesita Docker: usa la base sigo_dental_test y la base 1 de Redis)
 powershell -ExecutionPolicy Bypass -File scripts\prueba-api.ps1   # prueba de humo con la API corriendo
 
 cd ..
@@ -133,10 +134,10 @@ Por ser datos de salud, el service worker **sólo guarda la aplicación** (HTML,
 | `docs/03-modelo-datos.md` | Tablas, restricciones y reglas en la base. |
 | `docs/04-matriz-permisos.md` | Rol × permiso. |
 | `docs/05-trazabilidad-y-pruebas.md` | Requisito → prueba → estado, con los resultados reales. |
-| `docs/capturas/` | Pantallas de las Etapas 1 y 2. |
+| `docs/capturas/` | Pantallas de las Etapas 1 a 3. |
 
 ## Lo que este proyecto **no** afirma
 
-- **Firmas:** las notas y consentimientos (Etapas 3–4) usarán firma **electrónica simple** (re-autenticación + hash). No es una firma digital con certificado ni una firma biométrica.
+- **Firmas:** las notas SOEP, adendas y procedimientos usan firma **electrónica simple** (volver a ingresar el código MFA + hash SHA-256 del contenido). No es una firma digital con certificado; la de los consentimientos (Etapa 4) tampoco será biométrica.
 - **País y facturación:** no se asume ningún país ni autoridad tributaria; la facturación será un adaptador simulado hasta que el cliente lo defina.
 - **RNF de rendimiento, disponibilidad y cifrado (TLS 1.3, AES-256):** dependen de la infraestructura y de mediciones que aún no se hicieron. Están marcados como pendientes, no como cumplidos.

@@ -34,7 +34,7 @@ Navegador (React 19 + Vite, PWA) ──fetch /api + Bearer JWT──► Go 1.24 
 | `middleware` | `RequireAuth` (Bearer → JWT → sesión → inactividad), `RequireCompleta` (MFA y contraseña definitiva), `RequirePermisos`, `RequireAlguno`. |
 | `controllers` | HTTP: lectura estricta del JSON (campos desconocidos ⇒ 400), validación, auditoría y respuesta. Errores `models.APIError{status, code, message, error, extra}`. |
 | `repository` | SQL con pgx detrás de la interfaz `DBRepository`; traduce códigos de PostgreSQL (23505 ⇒ duplicado, 23P01 ⇒ superposición). |
-| `domain` | Reglas puras sin E/S: alertas médicas, máquina de estados de la cita, edad, día local. 100 % cubierto por pruebas. |
+| `domain` | Reglas puras sin E/S: alertas médicas, máquina de estados de la cita, edad, día local, numeración FDI ↔ Universal, superficies, catálogo de hallazgos, estado del odontograma y NIC. 99 % cubierto por pruebas. |
 | `notificaciones` | Planificador (confirmación, −48 h, −24 h; OMITIDO si ya pasó o sin autorización), plantillas sin datos clínicos, despachador. |
 | `seguridad` | bcrypt, JWT, TOTP, tokens aleatorios. |
 | `permisos` | Catálogo de permisos y matriz por rol (ver 04-matriz-permisos). |
@@ -74,4 +74,5 @@ React 19 en **JavaScript** (`.jsx`), Vite 8, Tailwind 4, React Router 7, `vite-p
 | **TLS 1.3** (RNF-04) | Proxy inverso / plataforma (Render, Caddy) | ⏳ se verifica en el despliegue (Etapa 7) |
 | **AES-256 en reposo** (RNF-04) | Disco o BD gestionada (Neon cifra en reposo) y *bucket* de archivos | ⏳ evidencia del proveedor (Etapa 7) |
 | **99,9 %** (RNF-02) | Infraestructura y monitoreo | ⏳ |
-| Firma de notas y consentimientos | Código (Etapas 3–4) | 🟡 firma **electrónica simple** (re-autenticación + hash). No es firma digital con certificado X.509 ni firma biométrica (ver 01-analisis A-05, A-06). |
+| Firma de notas SOEP, adendas y procedimientos | Código (Etapa 3) | ✅ firma **electrónica simple**: re-autenticación con código MFA + hash SHA-256 verificable. No es firma digital con certificado X.509 (ver 01-analisis A-05). |
+| Firma de consentimientos | Código (Etapa 4) | 🟡 trazo manuscrito digitalizado u OTP; no es firma biométrica (A-06). |

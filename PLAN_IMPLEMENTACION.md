@@ -49,19 +49,21 @@
 - [x] OpenAPI generado del registro de rutas (`go run . openapi`)
 - [x] **Verificación:** 20 citas simultáneas ⇒ 1 éxito; `INSERT` directo superpuesto falla; humo PowerShell "TODO OK"
 
-## ETAPA 3 — Núcleo clínico (rama `etapa-3-clinica`)
+## ETAPA 3 — Núcleo clínico ✅ (rama `etapa-3-clinica`)
 
-> RF-03, RF-04, RF-05, RN-01. Requiere respuesta a Q-02 (tipo de firma) y Q-03 (recetas).
+> RF-03, RF-04, RF-05, RN-01. Q-02 (tipo de firma) sigue abierta: se aplicó el supuesto S-03
+> (firma electrónica simple). Q-03 (recetas) sigue abierta: P-01 no se implementó.
 
-- [ ] Migración `003_clinica.sql`: `odontograma_eventos`, `periodontogramas` + `perio_sitios` (NIC como columna generada), `notas_soep` + `adendas`, `procedimientos_realizados`
-- [ ] Triggers: nota no editable si está firmada o vencida (`bloqueo_en`); procedimiento realizado sin `DELETE` ni edición (RN-01)
-- [ ] Bloqueo de registros clínicos mientras la anamnesis esté pendiente
-- [ ] Odontograma SVG interactivo: 32/20 dientes, FDI ↔ Universal (se guarda siempre FDI), superficies, catálogo de colores y símbolos con leyenda
-- [ ] Periodontograma: 6 sitios, margen gingival con convención de signo rotulada, NIC en el servidor, furca, movilidad, sangrado
-- [ ] Notas SOEP: borrador → firma electrónica simple (re-autenticación TOTP + hash SHA-256 + registro profesional); adendas firmadas
-- [ ] Almacenamiento de archivos (interfaz; disco local en desarrollo)
-- [ ] Auditoría de cada lectura y escritura clínica
-- [ ] **Verificación:** edición rechazada a las 24 h por API **y** BD; borrado de procedimiento realizado imposible; tabla FDI↔Universal completa en pruebas; casos numéricos de NIC
+- [x] Migración `003_clinica.sql`: `odontograma_eventos`, `periodontogramas` + `perio_dientes` + `perio_sitios` (NIC generado), `notas_soep` + `notas_adendas`, `procedimientos_realizados` + `procedimientos_adendas`
+- [x] Triggers: nota no editable si está firmada o vencida; procedimiento realizado sin `UPDATE` ni `DELETE` (RN-01); todo lo demás sólo inserción
+- [x] Bloqueo de registros clínicos mientras la anamnesis esté pendiente (409 `ANAMNESIS_PENDIENTE`)
+- [x] Odontograma SVG interactivo: 32/20 dientes, FDI ↔ Universal (se guarda FDI), superficies con I/P, catálogo con leyenda, historial
+- [x] Periodontograma: 6 sitios, convención de signo del MG rotulada, NIC en la BD, furca, movilidad, sangrado, resumen
+- [x] Notas SOEP: borrador → firma electrónica simple (código MFA + hash SHA-256 + registro profesional); adendas firmadas; verificación del hash
+- [x] Procedimientos realizados firmados e inmutables con adendas
+- [x] Auditoría de cada lectura y escritura clínica; firmas fallidas auditadas
+- [ ] Almacenamiento de archivos (radiografías, documentos): se pasa a la Etapa 4 junto con los consentimientos
+- [x] **Verificación:** edición rechazada a las 24 h por API **y** BD; borrado de procedimiento realizado imposible; tabla FDI↔Universal completa en pruebas; casos numéricos de NIC; recorrido en el navegador
 
 ## ETAPA 4 — Planes y consentimientos (rama `etapa-4-presupuestos`)
 
@@ -71,6 +73,7 @@
 - [ ] Descuento sobre el tope del rol ⇒ requiere autorización
 - [ ] Aprobación total o parcial ⇒ tareas agendables sólo de los ítems aprobados
 - [ ] Consentimientos por procedimiento: plantilla, documento con hash, firma manuscrita digitalizada (no biométrica) u OTP (proveedor simulado); inmutable tras firmar
+- [ ] Almacenamiento de archivos (interfaz; disco local en desarrollo) para consentimientos firmados y adjuntos clínicos
 - [ ] **Verificación:** aprobar 2 de 3 ítems crea exactamente 2 tareas; documento firmado no se modifica
 
 ## ETAPA 5 — Caja y facturación (rama `etapa-5-caja`)
