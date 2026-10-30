@@ -1,5 +1,5 @@
 // Panel de inicio: sólo cifras reales y sólo los widgets que el rol puede ver (GET /api/panel).
-import { ArrowRight, ShieldAlert } from "lucide-react";
+import { ArrowRight, CalendarDays, ShieldAlert } from "lucide-react";
 import { useCallback, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ETAPA_ACTUAL, MODULOS } from "../components/modulos";
@@ -7,8 +7,8 @@ import { Alert, Badge, Card, Skeleton } from "../components/ui";
 import { useAuth } from "../context/useAuth";
 import { useApi } from "../hooks/useApi";
 import { getPanel } from "../services/sistemaService";
-import { ETIQUETA_ACCION, ETIQUETA_ROL } from "../utils/etiquetas";
-import { fmtFechaHora, fmtRelativo } from "../utils/fechas";
+import { ETIQUETA_ACCION, ETIQUETA_ESTADO, ETIQUETA_ROL, TONO_ESTADO } from "../utils/etiquetas";
+import { fmtFechaHora, fmtRelativo, horaMin } from "../utils/fechas";
 
 const Cifra = ({ etiqueta, valor, tono }) => (
   <div className="rounded-lg border border-line bg-white p-4">
@@ -61,6 +61,78 @@ const Panel = () => {
         <Alert tone="danger" title="No se pudo cargar el panel">
           {error}
         </Alert>
+      )}
+
+      {w?.agendaHoy && (
+        <section aria-labelledby="t-agenda" className="space-y-3">
+          <Titulo id="t-agenda">{w.agendaHoy.alcance === "MIAS" ? "Mi agenda de hoy" : "Agenda de hoy"}</Titulo>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <Cifra etiqueta="Programadas" valor={sum(w.agendaHoy.porEstado, "PROGRAMADO")} />
+            <Cifra etiqueta="Confirmadas" valor={sum(w.agendaHoy.porEstado, "CONFIRMADO")} />
+            <Cifra
+              etiqueta="En sala / en atención"
+              valor={sum(w.agendaHoy.porEstado, "EN_SALA_ESPERA", "EN_ATENCION")}
+            />
+            <Cifra etiqueta="Atendidas" valor={sum(w.agendaHoy.porEstado, "ATENDIDO")} />
+            <Cifra
+              etiqueta="Canceladas / no asistió"
+              valor={sum(w.agendaHoy.porEstado, "CANCELADO", "NO_ASISTIO")}
+              tono="warn"
+            />
+          </div>
+          <Card>
+            <div className="flex items-center justify-between border-b border-line px-4 py-3">
+              <p className="text-sm font-medium">Próximas citas de hoy</p>
+              <Link to="/agenda" className="inline-flex items-center gap-1 text-sm text-brand-700 hover:underline">
+                Abrir agenda <ArrowRight className="size-3.5" />
+              </Link>
+            </div>
+            {w.agendaHoy.proximas.length === 0 ? (
+              <p className="px-4 py-6 text-center text-sm text-muted">No quedan citas pendientes hoy.</p>
+            ) : (
+              <ul className="divide-y divide-line">
+                {w.agendaHoy.proximas.map((c) => (
+                  <li key={c.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 text-sm">
+                    <CalendarDays className="size-4 text-brand-600" aria-hidden />
+                    <span className="w-24 font-medium tabular-nums">
+                      {horaMin(c.inicio)}–{horaMin(c.fin)}
+                    </span>
+                    {puede("pacientes.leer") ? (
+                      <Link to={`/pacientes/${c.pacienteId}`} className="font-medium text-brand-800 hover:underline">
+                        {c.paciente}
+                      </Link>
+                    ) : (
+                      <span className="font-medium">{c.paciente}</span>
+                    )}
+                    {c.alertasCriticas.length > 0 && (
+                      <span
+                        className="inline-flex items-center gap-1 rounded bg-danger-600 px-1.5 py-0.5 text-[11px] font-bold text-white"
+                        title={c.alertasCriticas.join(", ")}
+                      >
+                        <ShieldAlert className="size-3" /> {c.alertasCriticas.join(", ")}
+                      </span>
+                    )}
+                    <span className="text-muted">
+                      {c.sillon}
+                      {w.agendaHoy.alcance === "TODAS" && ` · ${c.odontologo}`}
+                    </span>
+                    <Badge tone={TONO_ESTADO[c.estado]}>{ETIQUETA_ESTADO[c.estado]}</Badge>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </section>
+      )}
+
+      {w?.pacientes && (
+        <section aria-labelledby="t-pac" className="space-y-3">
+          <Titulo id="t-pac">Pacientes</Titulo>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Cifra etiqueta="Pacientes registrados" valor={w.pacientes.total} />
+            <Cifra etiqueta="Con anamnesis pendiente" valor={w.pacientes.anamnesisPendiente} tono="warn" />
+          </div>
+        </section>
       )}
 
       {puede("usuarios.gestionar") && (

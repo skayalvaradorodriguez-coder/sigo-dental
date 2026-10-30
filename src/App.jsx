@@ -4,17 +4,25 @@ import Layout from "./components/Layout";
 import { ETAPA_ACTUAL, MODULOS } from "./components/modulos";
 import { Spinner } from "./components/ui";
 import { useAuth } from "./context/useAuth";
+import Agenda from "./pages/agenda/Agenda";
 import Ajustes from "./pages/admin/Ajustes";
 import Auditoria from "./pages/admin/Auditoria";
+import Catalogos from "./pages/admin/Catalogos";
 import Usuarios from "./pages/admin/Usuarios";
 import { CambiarPassword, ConfigurarMFA, Login, VerificarMFA } from "./pages/auth/PasosIngreso";
 import { ModuloPendiente, NoEncontrada } from "./pages/ModuloPendiente";
+import FichaPaciente from "./pages/pacientes/FichaPaciente";
+import FormularioPaciente from "./pages/pacientes/FormularioPaciente";
+import Pacientes from "./pages/pacientes/Pacientes";
 import Panel from "./pages/Panel";
 
 const PANTALLAS = {
   "/usuarios": Usuarios,
   "/configuracion": Ajustes,
   "/auditoria": Auditoria,
+  "/catalogos": Catalogos,
+  "/pacientes": Pacientes,
+  "/agenda": Agenda,
 };
 
 // Mientras falte un paso del inicio de sesión (siguientePaso), no se muestra ninguna otra pantalla.
@@ -44,6 +52,9 @@ const App = () => {
               />
             );
           })}
+          {puede("pacientes.escribir") && <Route path="pacientes/nuevo" element={<FormularioPaciente />} />}
+          {puede("pacientes.leer") && <Route path="pacientes/:id" element={<FichaPaciente />} />}
+          {puede("pacientes.escribir") && <Route path="pacientes/:id/editar" element={<FormularioPaciente />} />}
           <Route path="login" element={<Navigate to="/" replace />} />
           <Route path="*" element={<NoEncontrada />} />
         </Route>
