@@ -1,0 +1,95 @@
+# Integración continua: pruebas, análisis estático (SAST), dependencias vulnerables y pruebas de
+# navegador en Chromium, Firefox y WebKit. Corre en cada push y pull request.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env: { POSTGRES_USER: sigo, POSTGRES_PASSWORD: sigo_dev, POSTGRES_DB: sigo_dental }
+        ports: ["5434:5432"]
+        options: --health-cmd "pg_isready -U sigo" --health-interval 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6380:6379"]
+    defaults: { run: { working-directory: sigo-backend } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version-file: sigo-backend/go.mod, cache-dependency-path: sigo-backend/go.sum }
+      - name: Base de pruebas
+        run: PGPASSWORD=sigo_dev psql -h localhost -p 5434 -U sigo -d sigo_dental -c "CREATE DATABASE sigo_dental_test OWNER sigo"
+      - run: go vet ./...
+      - name: Pruebas unitarias y de integración con cobertura de la capa de endpoints
+        run: |
+          go test -count=1 -p 1 -coverpkg=./controllers/...,./middleware/...,./repository/...,./routes/... -coverprofile=c.out ./...
+          go tool cover -func=c.out | tail -1
+      - name: SAST (gosec)
+        run: |
+          go install github.com/securego/gosec/v2/cmd/gosec@v2.21.4
+          gosec -quiet ./...
+      - name: Dependencias vulnerables (govulncheck)
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - name: Dependencias de producción sin vulnerabilidades altas o críticas
+        run: npm audit --omit=dev --audit-level=high
+
+  navegadores:
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env: { POSTGRES_USER: sigo, POSTGRES_PASSWORD: sigo_dev, POSTGRES_DB: sigo_dental }
+        ports: ["5434:5432"]
+        options: --health-cmd "pg_isready -U sigo" --health-interval 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6380:6379"]
+    env:
+      DB_PASSWORD: sigo_dev
+      JWT_SECRET: secreto-de-ci-para-pruebas-de-navegador-0123456789
+      CLINIC_TIMEZONE: America/Guayaquil
+      STATIC_DIR: ../dist
+      SIGO_BIN: ${{ github.workspace }}/sigo-backend/sigo-api
+      SIGO_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version-file: sigo-backend/go.mod, cache-dependency-path: sigo-backend/go.sum }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci && npm run build
+      - name: API con datos de demostración y el paciente de volumen (RNF-01)
+        working-directory: sigo-backend
+        run: |
+          go build -o sigo-api .
+          ./sigo-api migrar && ./sigo-api semilla && ./sigo-api volumen
+          (./sigo-api > api.log 2>&1 &) && sleep 3 && curl -sf localhost:3000/api/health
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - name: Chromium, Firefox, WebKit, tablet, 1920×1080 y celular (RNF-07, RNF-08) + RNF-01
+        run: npx playwright test --project=chromium --project=firefox --project=webkit --project=tablet-10.5 --project=fullhd --project=celular
+      - name: Medición de RNF-01 (API) y RNF-03 (150 usuarios, 60 s)
+        working-directory: sigo-backend
+        run: ./sigo-api medir && ./sigo-api carga http://localhost:3000 150 60
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: informe-playwright, path: e2e-informe }
