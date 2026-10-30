@@ -1,5 +1,5 @@
 // Ficha del paciente: cabecera con alertas de alta visibilidad (RF-02), datos, anamnesis y citas.
-import { ArrowLeft, CalendarPlus, Pencil } from "lucide-react";
+import { ArrowLeft, CalendarPlus, Pencil, Wallet } from "lucide-react";
 import { useCallback } from "react";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { AlertasMedicas } from "../../components/AlertasMedicas";
@@ -18,6 +18,7 @@ import Procedimientos from "../expediente/Procedimientos";
 import Recetas from "../expediente/Recetas";
 import ConsentimientosPaciente from "../consentimientos/ConsentimientosPaciente";
 import PresupuestosPaciente from "../presupuestos/PresupuestosPaciente";
+import PagosPaciente from "../caja/PagosPaciente";
 import PanelAnamnesis from "./PanelAnamnesis";
 
 const Campo = ({ etiqueta, valor }) => (
@@ -106,6 +107,7 @@ const FichaPaciente = () => {
         ]
       : []),
     ...(puede("citas.leer") ? [{ id: "citas", label: "Citas" }] : []),
+    ...(puede("caja.operar", "caja.revisar") ? [{ id: "pagos", label: "Pagos" }] : []),
   ];
 
   return (
@@ -135,6 +137,11 @@ const FichaPaciente = () => {
             {puede("citas.escribir") && (
               <Button variant="secondary" onClick={() => navegar(`/agenda?nuevo=${p.id}`)}>
                 <CalendarPlus className="size-4" /> Agendar
+              </Button>
+            )}
+            {puede("caja.operar") && (
+              <Button variant="secondary" onClick={() => navegar(`/caja?paciente=${p.id}`)}>
+                <Wallet className="size-4" /> Cobrar
               </Button>
             )}
             {puede("pacientes.escribir") && (
@@ -201,6 +208,7 @@ const FichaPaciente = () => {
       )}
       {pestana === "anamnesis" && <PanelAnamnesis paciente={p} alGuardar={recargar} />}
       {pestana === "citas" && <CitasDelPaciente pacienteId={p.id} />}
+      {puede("caja.operar", "caja.revisar") && pestana === "pagos" && <PagosPaciente pacienteId={p.id} />}
       {puede("clinica.leer") && pestana === "odontograma" && <Odontograma paciente={p} />}
       {puede("clinica.leer") && pestana === "periodontograma" && <Periodontograma paciente={p} />}
       {puede("clinica.leer") && pestana === "evolucion" && <NotasSOEP paciente={p} />}

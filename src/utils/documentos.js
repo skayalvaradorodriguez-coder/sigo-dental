@@ -1,5 +1,6 @@
 // Impresión de recetas y consentimientos y formatos compartidos por las pantallas de la Etapa 4.
-import { ETIQUETA_METODO_FIRMA } from "./etiquetas";
+import { fmtDinero } from "./dinero";
+import { ETIQUETA_COMPROBANTE, ETIQUETA_MEDIO, ETIQUETA_METODO_FIRMA } from "./etiquetas";
 import { fmtFechaHora, fmtFechaHoraSeg } from "./fechas";
 import { escapar, imprimir } from "./imprimir";
 
@@ -35,3 +36,36 @@ export const imprimirReceta = (r, paciente) =>
       `<p style="margin-top:48px">______________________________<br>${escapar(r.odontologo)}${r.registroProfesional ? ` · Reg. ${escapar(r.registroProfesional)}` : ""}</p>` +
       `<p class="pie">Firma electrónica simple (código MFA) · huella SHA-256 ${escapar(r.hashFirma)}. Validez legal sujeta a la normativa de prescripción del país.</p>`,
   );
+
+// Comprobante del cobro (factura o nota de crédito vigente). El proveedor SIMULADO se rotula.
+export const imprimirCobro = (cb, clinica = "SIGO-Dental") => {
+  const ultimo = (tipo) => [...cb.comprobantes].reverse().find((x) => x.tipo === tipo);
+  const comp = (cb.anulacion && ultimo("NOTA_CREDITO")) || ultimo("FACTURA");
+  const titulo =
+    comp?.estado === "AUTORIZADO"
+      ? `${ETIQUETA_COMPROBANTE[comp.tipo]} ${comp.numero}`
+      : `Recibo interno N.º ${cb.numero}`;
+  imprimir(
+    titulo,
+    `<h1>${escapar(titulo)}</h1><p class="muted">${escapar(clinica)} · ${escapar(fmtFechaHora(cb.registradoEn))} · recibo interno N.º ${cb.numero}</p>` +
+      (comp?.simulado
+        ? `<p><strong>DOCUMENTO DE PRUEBA — proveedor de facturación SIMULADO, sin validez tributaria.</strong></p>`
+        : "") +
+      (cb.anulacion ? `<p><strong>ANULADO:</strong> ${escapar(cb.anulacion.motivo)}</p>` : "") +
+      `<p>Paciente: <strong>${escapar(cb.paciente)}</strong></p>` +
+      `<table><thead><tr><th>Concepto</th><th class="num">Monto</th></tr></thead><tbody>` +
+      cb.conceptos
+        .map((c) => `<tr><td>${escapar(c.descripcion)}</td><td class="num">${fmtDinero(c.monto)}</td></tr>`)
+        .join("") +
+      `</tbody></table><h2>Total: ${fmtDinero(cb.total)}</h2>` +
+      `<table><thead><tr><th>Forma de pago</th><th>Referencia</th><th class="num">Monto</th></tr></thead><tbody>` +
+      cb.pagos
+        .map(
+          (p) =>
+            `<tr><td>${escapar(ETIQUETA_MEDIO[p.medio])}${p.convenio ? ` · ${escapar(p.convenio)}` : ""}</td><td>${escapar(p.referencia ?? "")}</td><td class="num">${fmtDinero(p.monto)}</td></tr>`,
+        )
+        .join("") +
+      `</tbody></table>` +
+      `<p class="pie">${comp ? `Autorización: ${escapar(comp.autorizacion ?? "—")} · ` : ""}Atendido por ${escapar(cb.registradoPor)}. Impuestos según la normativa del país (pendiente de definir).</p>`,
+  );
+};

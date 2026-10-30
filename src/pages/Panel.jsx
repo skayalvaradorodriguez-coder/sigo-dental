@@ -125,6 +125,29 @@ const Panel = () => {
         </section>
       )}
 
+      {(w?.caja || w?.cierres) && (
+        <section aria-labelledby="t-caja" className="space-y-3">
+          <Titulo id="t-caja">Caja</Titulo>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {w.caja && (
+              <Link to="/caja" className="block">
+                <div className="rounded-lg border border-line bg-white p-4 hover:bg-canvas">
+                  <p className="text-xs font-medium text-muted">Mi caja</p>
+                  <p className="mt-1 text-lg font-semibold">
+                    {w.caja.abierta ? `Abierta · ${w.caja.cobros} cobro(s)` : "Cerrada"}
+                  </p>
+                  {w.caja.abierta && <p className="text-xs text-muted">desde {fmtFechaHora(w.caja.abiertaEn)}</p>}
+                </div>
+              </Link>
+            )}
+            {w.cierres && (
+              <Link to="/caja" className="block">
+                <Cifra etiqueta="Cierres de caja por revisar" valor={w.cierres.porRevisar} tono="warn" />
+              </Link>
+            )}
+          </div>
+        </section>
+      )}
       {w?.pacientes && (
         <section aria-labelledby="t-pac" className="space-y-3">
           <Titulo id="t-pac">Pacientes</Titulo>
