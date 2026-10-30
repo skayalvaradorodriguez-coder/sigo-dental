@@ -25,11 +25,11 @@ services:
         sync: false
       - key: JWT_SECRET
         generateValue: true
-      - key: REDIS_ADDR
+      - key: REDIS_URL       # redis://host:puerto de la red privada de Render
         fromService:
           type: keyvalue
           name: sigo-redis
-          property: hostport
+          property: connectionString
       - key: WEB_ORIGIN      # https://<su-servicio>.onrender.com o el dominio propio
         sync: false
       - key: CLINIC_TIMEZONE # zona IANA de la clínica
