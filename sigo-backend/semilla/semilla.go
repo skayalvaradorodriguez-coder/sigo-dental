@@ -27,7 +27,9 @@ import (
 	"sigo-backend/seguridad"
 )
 
-const PasswordDemo = "Demo-Sigo-2026"
+// PasswordDemo: contraseña pública de los usuarios FICTICIOS de demostración (la semilla no corre en
+// producción y obliga a cambiarla sólo al usuario de primer ingreso).
+const PasswordDemo = "Demo-Sigo-2026" // #nosec G101 -- credencial de demostración documentada, no un secreto
 
 type UsuarioDemo struct {
 	Email, Nombre, Rol, Registro string

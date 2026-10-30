@@ -103,12 +103,16 @@
 - [x] Pantallas: inventario (stock, kardex, movimientos, insumos, recetas) y honorarios (mis honorarios, liquidar, liquidaciones, reglas); ubicación de descargo al registrar un procedimiento
 - [x] **Verificación:** casos numéricos de las 3 reglas (40 % de 35 = 14,00; 50 % de 230 − 30 − 3,30 = 98,35; fijo 12,00); descargo atómico con falla simulada en la BD (no queda el procedimiento); liquidar dos veces ⇒ 409
 
-## ETAPA 7 — Calidad y salida (rama `etapa-7-calidad`)
+## ETAPA 7 — Calidad y salida ✅ (rama `etapa-7-calidad`)
 
-> RNF-01…04, RNF-08, SRS 8.2. Nada de esto se declara cumplido sin la medición.
+> RNF-01…04, RNF-07, RNF-08, SRS 8.2. Nada se declara cumplido sin la medición; lo que depende de la
+> infraestructura queda ⏳ con su procedimiento de verificación (DESPLIEGUE.md §6).
 
-- [ ] Medición de RNF-01 con un expediente de volumen definido (Playwright / Lighthouse)
-- [ ] Prueba de carga k6 con 150 usuarios virtuales (RNF-03), informe p95
-- [ ] Playwright en Chromium, Firefox y WebKit; tablet 834×1112 y 1920×1080 (RNF-07, RNF-08)
-- [ ] Cobertura ≥ 80 %; `gosec`, `govulncheck`, `npm audit`, OWASP ZAP sin Altos/Críticos
-- [ ] Dockerfile multi-etapa, `render.yaml`, base en Neon, `DESPLIEGUE.md`; verificación de TLS 1.3 y cifrado en reposo del proveedor (RNF-04)
+- [x] RNF-01: paciente de volumen (`go run . volumen`: 10 años, 200 notas, 120 citas, 20 periodontogramas, 300 procedimientos), medición por la API (`go run . medir`) y en el navegador (`e2e/rnf01.spec.js`)
+- [x] RNF-03: `go run . carga` con 150 usuarios virtuales, flujo realista y pausas de 1 a 3 s; informe p50/p95/p99 y errores
+- [x] Playwright en el repositorio: Chromium, Firefox, WebKit, Edge, tablet 834×1112, 1920×1080 y celular; prueba de CSP
+- [x] Cobertura ≥ 80 % (endpoints); gosec 0; npm audit producción 0; OWASP ZAP sin altos/medios/bajos (2 medios corregidos)
+- [x] CSP estricta sin `unsafe-inline`, HSTS en producción, `Cache-Control: no-store` en la API, 404 para archivos ocultos y rutas ajenas a la app
+- [x] Producción: TLS obligatorio hacia la base, secretos propios, `crear-admin`, herramientas de prueba bloqueadas
+- [x] Dockerfile multi-etapa, `render.yaml`, `.github/workflows/ci.yml`, `DESPLIEGUE.md`, `scripts/medir.ps1`, `scripts/seguridad.ps1`
+- [ ] ⏳ Desplegar; TLS 1.3 y cifrado en reposo del proveedor (RNF-04); monitor de disponibilidad (RNF-02); Firefox/WebKit/Edge y govulncheck en la CI

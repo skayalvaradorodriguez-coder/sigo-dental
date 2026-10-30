@@ -106,6 +106,7 @@ var Docs = map[string]Doc{
 	"POST /api/caja/cierres/:id/revisar":                   {"Auditor: marca el cierre como revisado; con diferencias fuera de tolerancia exige nota.", "{nota?}", 200},
 	"GET /api/caja/cuentas-por-cobrar":                     {"Auditor: montos pagados con seguro pendientes de cobrar a cada aseguradora (S-06).", "", 200},
 	"GET /api/inventario/ubicaciones":                      {"Ubicaciones de stock (bodega y consultorios); una es la de por defecto.", "", 200},
+	"POST /api/inventario/ubicaciones":                     {"Crea una ubicación de stock (bodega o consultorio); la primera queda por defecto.", "{nombre, consultorioId?, porDefecto?}", 201},
 	"GET /api/inventario/insumos":                          {"Insumos con costo unitario, stock mínimo y stock total (?todos=true incluye inactivos).", "", 200},
 	"POST /api/inventario/insumos":                         {"Crea un insumo.", "{codigo, nombre, unidad, costoUnitario (4 decimales), stockMinimo?}", 201},
 	"PATCH /api/inventario/insumos/:id":                    {"Modifica o desactiva un insumo (nunca se borra). El costo nuevo rige para descargos futuros.", "{nombre, unidad, costoUnitario, stockMinimo?, activo?}", 200},

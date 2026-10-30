@@ -103,6 +103,19 @@ func Cargar(archivos ...string) (Config, error) {
 	default:
 		errs = append(errs, "APP_ENV debe ser dev, test o prod")
 	}
+	if c.Entorno == "prod" {
+		// RNF-04: en producción la conexión a la base debe ir cifrada (TLS) y los secretos no pueden
+		// ser los de ejemplo.
+		if !strings.Contains(c.DatabaseURL, "sslmode=require") && !strings.Contains(c.DatabaseURL, "sslmode=verify") {
+			errs = append(errs, "en producción la base de datos exige TLS: DATABASE_URL con sslmode=require (o verify-full)")
+		}
+		if strings.Contains(c.JWTSecret, "cambie-este-secreto") || strings.Contains(c.JWTSecret, "pruebas") {
+			errs = append(errs, "JWT_SECRET de ejemplo: genere uno propio para producción")
+		}
+		if strings.HasPrefix(c.WebOrigin, "http://") && !strings.Contains(c.WebOrigin, "localhost") {
+			errs = append(errs, "WEB_ORIGIN debe usar https:// en producción")
+		}
+	}
 	if len(errs) > 0 {
 		return c, fmt.Errorf("configuración inválida:\n  - %s", strings.Join(errs, "\n  - "))
 	}

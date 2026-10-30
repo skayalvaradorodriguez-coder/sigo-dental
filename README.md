@@ -16,7 +16,7 @@ Mismo stack y forma de trabajo que **catalogo-multinivel**: frontend en React + 
 | 4. Planes y consentimientos | Presupuestos por fases con descuentos autorizados por otro odontólogo, aprobación total o parcial → tareas agendables, consentimientos firmados en pantalla u OTP (simulado), recetas con alertas de alergia, archivos con verificación SHA-256 | ✅ |
 | 5. Caja y facturación | Cobros con pago mixto (efectivo, tarjeta, transferencia, seguro), comprobantes por un proveedor SIMULADO, anulación con nota de crédito, cierre ciego conciliado por el Auditor | ✅ |
 | 6. Inventario y honorarios | Stock por ubicación con kardex, descargo automático de insumos al registrar procedimientos, comisiones con las tres reglas del SRS y liquidación por periodo | ✅ |
-| 7 | Calidad (mediciones de rendimiento y carga, seguridad, navegadores) y despliegue | Ver `PLAN_IMPLEMENTACION.md` |
+| 7. Calidad y salida | Mediciones de RNF-01 y RNF-03, pruebas de navegador por tamaño de pantalla, SAST/DAST, CSP estricta, imagen Docker, Render + Neon, integración continua | ✅ (⏳ lo que depende de desplegar) |
 
 El detalle requisito por requisito está en `REQUIREMENTS_CHECKLIST.md`.
 
@@ -103,7 +103,18 @@ npm test                                        # pruebas del frontend (Vitest)
 npm run lint
 ```
 
-Resultados y cobertura medidos: `docs/05-trazabilidad-y-pruebas.md`.
+Pruebas de navegador y mediciones (Etapa 7), con la API y el frontend corriendo:
+
+```powershell
+npx playwright install chromium firefox webkit   # una sola vez
+cd sigo-backend
+go run . volumen                                 # paciente con 10 años de historia (RNF-01)
+powershell -ExecutionPolicy Bypass -File scripts\medir.ps1      # RNF-01, RNF-03, navegadores y pantallas
+powershell -ExecutionPolicy Bypass -File scripts\seguridad.ps1  # gosec, govulncheck, npm audit y OWASP ZAP
+```
+
+Resultados y cobertura medidos: `docs/05-trazabilidad-y-pruebas.md`, `docs/mediciones/` y `docs/seguridad/`.
+Despliegue (Docker, Render, Neon): `DESPLIEGUE.md`.
 
 ## Documentación de la API
 
@@ -138,6 +149,8 @@ Por ser datos de salud, el service worker **sólo guarda la aplicación** (HTML,
 | `docs/04-matriz-permisos.md` | Rol × permiso. |
 | `docs/05-trazabilidad-y-pruebas.md` | Requisito → prueba → estado, con los resultados reales. |
 | `docs/capturas/` | Pantallas de las Etapas 1 a 6. |
+| `docs/mediciones/`, `docs/seguridad/` | Resultados de RNF-01, RNF-03, SAST y DAST (Etapa 7). |
+| `DESPLIEGUE.md` | Imagen Docker, Render + Neon, primer administrador y verificaciones de producción. |
 
 ## Lo que este proyecto **no** afirma
 

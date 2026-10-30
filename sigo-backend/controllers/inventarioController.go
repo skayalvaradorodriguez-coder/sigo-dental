@@ -29,6 +29,30 @@ func (h *Controllers) ListarUbicaciones(c *fiber.Ctx) error {
 	return c.JSON(us)
 }
 
+// CrearUbicacion — POST /api/inventario/ubicaciones {nombre, consultorioId?, porDefecto?}
+func (h *Controllers) CrearUbicacion(c *fiber.Ctx) error {
+	var in struct {
+		Nombre        string `json:"nombre"`
+		ConsultorioID string `json:"consultorioId"`
+		PorDefecto    bool   `json:"porDefecto"`
+	}
+	if err := leerJSON(c, &in); err != nil {
+		return err
+	}
+	errs := validacion.Errores{}
+	errs.Longitud("nombre", strings.TrimSpace(in.Nombre), 2, 80, "Nombre: 2 a 80 caracteres.")
+	errs.UUID("consultorioId", in.ConsultorioID, false)
+	if !errs.Ok() {
+		return errValidacion(c, errs)
+	}
+	id, err := h.Repo.CrearUbicacion(c.UserContext(), strings.TrimSpace(in.Nombre), validacion.Opcional(in.ConsultorioID), in.PorDefecto)
+	if err != nil {
+		return h.errorRepo(c, err, "", "Ya existe una ubicación con ese nombre o para ese consultorio.")
+	}
+	h.Auditar(c, repository.Evento{Accion: "CREACION", Entidad: "ubicacion_inventario", EntidadID: id, Detalle: map[string]any{"nombre": in.Nombre, "porDefecto": in.PorDefecto}})
+	return c.Status(201).JSON(fiber.Map{"id": id})
+}
+
 func (h *Controllers) ListarInsumos(c *fiber.Ctx) error {
 	xs, err := h.Repo.Insumos(c.UserContext(), c.Query("todos") == "true")
 	if err != nil {

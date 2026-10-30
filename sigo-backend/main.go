@@ -14,6 +14,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"sigo-backend/almacenamiento"
+	"sigo-backend/herramientas"
 	"strings"
 	"sync"
 	"syscall"
@@ -127,8 +128,85 @@ func ejecutarComando(ctx context.Context, cfg config.Config, pool *pgxpool.Pool,
 		}
 		resta := seguridad.PeriodoTOTP - time.Now().Unix()%seguridad.PeriodoTOTP
 		fmt.Printf("%s   (válido ~%d s más)\n", seguridad.CodigoTOTP(*sec, time.Now()), resta)
+	case "crear-admin":
+		// Primer administrador en una base nueva (también en producción, donde no hay semilla).
+		// Contraseña temporal que se muestra una vez; en el primer ingreso se cambia y se enrola el MFA.
+		if len(args) < 3 {
+			log.Fatal(`Uso: go run . crear-admin admin@clinica.com "Nombre Apellido"`)
+		}
+		var n int
+		if err := pool.QueryRow(ctx, `SELECT count(*) FROM usuarios WHERE rol='ADMIN_TI' AND activo`).Scan(&n); err != nil {
+			log.Fatal(err)
+		}
+		if n > 0 {
+			log.Fatal("Ya existe un administrador activo: cree los demás usuarios desde la aplicación.")
+		}
+		temp := seguridad.PasswordTemporal()
+		hash, err := seguridad.HashPassword(temp)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if _, err := pool.Exec(ctx, `INSERT INTO usuarios (email, nombre, rol, password_hash, debe_cambiar_password, mfa_activo) VALUES ($1,$2,'ADMIN_TI',$3,true,false)`,
+			strings.ToLower(strings.TrimSpace(args[1])), strings.TrimSpace(args[2]), hash); err != nil {
+			log.Fatalf("No se pudo crear: %v", err)
+		}
+		fmt.Printf("✔ Administrador creado: %s\n  Contraseña temporal (se muestra una sola vez): %s\n  Al ingresar deberá cambiarla y configurar el MFA.\n", args[1], temp)
+	case "token":
+		// Sesión ya verificada para pruebas automáticas del navegador (Playwright). Nunca en producción.
+		if cfg.EsProduccion() {
+			log.Fatal("No disponible en producción.")
+		}
+		if len(args) < 2 {
+			log.Fatal("Uso: go run . token odontologo@demo.sigo")
+		}
+		tok, err := herramientas.SesionDirecta(ctx, pool, cfg, strings.ToLower(args[1]))
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(tok)
+	case "volumen", "medir", "carga":
+		if cfg.EsProduccion() {
+			log.Fatal("Las herramientas de medición no se ejecutan en producción.")
+		}
+		base := "http://localhost:" + cfg.Puerto
+		if len(args) > 1 {
+			base = args[1]
+		}
+		switch args[0] {
+		case "volumen":
+			id, err := herramientas.Volumen(ctx, pool)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Printf("✔ Paciente de volumen %s listo (id %s)\n", herramientas.DocumentoVolumen, id)
+		case "medir":
+			rep := 30
+			if len(args) > 2 {
+				_, _ = fmt.Sscan(args[2], &rep)
+			}
+			informe, ok, err := herramientas.MedirExpediente(ctx, pool, cfg, base, rep)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Print(informe)
+			fmt.Println(map[bool]string{true: "✔ CUMPLE", false: "✖ NO CUMPLE"}[ok])
+		case "carga":
+			usuarios, segundos := 150, 60
+			if len(args) > 2 {
+				_, _ = fmt.Sscan(args[2], &usuarios)
+			}
+			if len(args) > 3 {
+				_, _ = fmt.Sscan(args[3], &segundos)
+			}
+			informe, ok, err := herramientas.Carga(ctx, pool, cfg, base, usuarios, time.Duration(segundos)*time.Second)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Print(informe)
+			fmt.Println(map[bool]string{true: "✔ CUMPLE", false: "✖ NO CUMPLE"}[ok])
+		}
 	default:
-		log.Fatalf("Comando desconocido: %s (use migrar, semilla, totp u openapi)", args[0])
+		log.Fatalf("Comando desconocido: %s (use migrar, semilla, totp, openapi, crear-admin, volumen, medir o carga)", args[0])
 	}
 }
 
@@ -143,10 +221,10 @@ func generarOpenAPI(cfg config.Config) {
 	if len(os.Args) > 2 {
 		destino = os.Args[2]
 	}
-	if err := os.MkdirAll(filepath.Dir(destino), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(destino), 0o750); err != nil {
 		log.Fatal(err)
 	}
-	if err := os.WriteFile(destino, append(doc, '\n'), 0o644); err != nil {
+	if err := os.WriteFile(destino, append(doc, '\n'), 0o600); err != nil {
 		log.Fatal(err)
 	}
 	fmt.Printf("✔ %s (%d rutas)\n", destino, len(registro))

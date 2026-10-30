@@ -11,12 +11,12 @@
 
 | Campo | Valor |
 |---|---|
-| **Etapa actual** | Etapa 6 completada · siguiente: Etapa 7 (calidad y salida) |
-| **Última tarea completada** | Etapa 6: inventario con kardex, descargo automático y atómico al registrar procedimientos, recetas de consumo; honorarios con las tres reglas, precedencia y liquidación por periodo (2026-10-30) |
-| **Siguiente tarea pendiente** | E7-01: medición de RNF-01 (expediente < 1,5 s) con volumen de datos definido |
-| **Pruebas** | Go: 33 unitarias + 61 de integración ✅ · Frontend: 29 (Vitest) ✅ · Humo PowerShell ✅ · Navegador: 21 (Etapas 1–2) + 10 (Etapa 3) + 12 (Etapa 4) + 7 (Etapa 5) + 6 (Etapa 6) pasos ✅ |
-| **Cobertura backend** | Capa de endpoints 80,7 % ✅ (meta SRS 8.2: ≥ 80 %) · total del backend 80,4 % |
-| **Bloqueadores** | Ninguno para la Etapa 7. Preguntas abiertas al cliente: Q-01…Q-06 (`docs/01-analisis-requisitos.md` §1.4); Q-01 (país) impide conectar la facturación real |
+| **Etapa actual** | Etapas 1–7 completadas · pendiente sólo lo que depende del despliegue y de decisiones del cliente (⏳) |
+| **Última tarea completada** | Etapa 7: mediciones de RNF-01 y RNF-03, pruebas de navegador por tamaño, SAST/DAST con hallazgos corregidos, CSP estricta, imagen Docker, blueprint de Render, integración continua y guía de despliegue (2026-10-30) |
+| **Siguiente tarea pendiente** | Desplegar (DESPLIEGUE.md) y completar las verificaciones ⏳ de RNF-02, RNF-04 y RNF-08 (Firefox/WebKit/Edge en la CI) |
+| **Pruebas** | Go: 34 unitarias + 63 de integración ✅ · Frontend: 29 (Vitest) ✅ · Playwright en el repositorio: 21 en Chromium (escritorio, tablet 834×1112, 1920×1080, celular) ✅ · Humo PowerShell ✅ · Recorridos de las Etapas 1–6 ✅ |
+| **Cobertura backend** | Capa de endpoints 80,9 % ✅ (meta SRS 8.2: ≥ 80 %) · total del backend 80,0 % |
+| **Bloqueadores** | Ninguno técnico. Para producción con datos reales: Q-01 (país → facturación real), mensajería real, Q-02 (tipo de firma) y textos legales (DESPLIEGUE.md §8) |
 
 ## Stack (igual a catalogo-multinivel)
 
@@ -28,7 +28,7 @@
 - [x] Inyección de dependencias por interfaces (`DBRepository`, `CacheRepository`, `Mensajeria`)
 - [x] Goroutine en segundo plano con apagado ordenado (`WaitGroup`)
 - [x] `scripts/prueba-api.ps1`, `PROJECT_MAP.md`, `.windsurfrules`, plan por etapas
-- [ ] Dockerfile + `render.yaml` + Neon (Etapa 7)
+- [x] Dockerfile multi-etapa + `render.yaml` (Render + Neon) + `.github/workflows/ci.yml` + `DESPLIEGUE.md` · [ ] ⏳ construir la imagen y desplegar (en este entorno no hay acceso a Docker Hub)
 
 ## Requerimientos funcionales (SRS §4)
 
@@ -78,10 +78,10 @@
 - [x] **RN-03** Sin dos citas simultáneas en el mismo sillón: `EXCLUDE USING gist` + 409 con la cita en conflicto; 20 peticiones simultáneas ⇒ 1 éxito
 
 ## Requerimientos no funcionales (SRS §5)
-- [ ] ⏳ **RNF-01** Expediente < 1,5 s — medición en la Etapa 7
-- [ ] ⏳ **RNF-02** Disponibilidad 99,9 % — infraestructura
-- [ ] ⏳ **RNF-03** 150 usuarios concurrentes — prueba de carga en la Etapa 7
-- [ ] ⏳ **RNF-04** TLS 1.3 y AES-256 en reposo — infraestructura (Etapa 7)
+- [x] **RNF-01** Expediente < 1,5 s — **medido en desarrollo** con un paciente de 10 años de historia: API p95 ≤ 35 ms por pestaña; navegador (Chromium, carga en frío) máx. 1 002 ms (`docs/mediciones/`) · [ ] ⏳ repetir en el entorno de producción
+- [ ] ⏳ **RNF-02** Disponibilidad 99,9 % — depende de la infraestructura: monitor externo de `/api/health` tras desplegar (DESPLIEGUE.md §6)
+- [x] **RNF-03** 150 usuarios concurrentes — **medido en desarrollo** (2 vCPU): 60 s, 5 160 pedidos, p95 9 ms, 0 % de errores (`go run . carga`) · [ ] ⏳ repetir en un entorno de pruebas igual al de producción
+- [ ] ⏳ **RNF-04** TLS 1.3 y AES-256 en reposo — depende del proveedor (Render/Neon): verificar tras desplegar (DESPLIEGUE.md §6). Desde el código: HSTS en producción y la API no arranca sin TLS hacia la base
 - [x] **RNF-05** Seguridad de acceso
   - [x] RBAC con menor privilegio; toda ruta con política (prueba automática)
   - [x] MFA TOTP obligatorio, anti-replay, rotación de token, enrolamiento con QR
@@ -93,13 +93,13 @@
   - [x] Presupuestos, autorizaciones de descuento, decisiones, consentimientos, recetas y archivos (lecturas y escrituras); archivo alterado
   - [x] Caja: apertura, cobros, anulaciones, comprobantes, cierre y revisión
   - [x] Inventario (insumos, movimientos, recetas) y honorarios (reglas, liquidaciones)
-- [x] **RNF-07** Responsive: escritorio y celular verificados · [ ] tablet 10,5" y 1920×1080 automatizados (Etapa 7)
-- [ ] **RNF-08** Navegadores: hoy probado en Chromium; Firefox, WebKit/Safari y Edge en la Etapa 7
+- [x] **RNF-07** Responsive: escritorio, celular, tablet 10,5" (834×1112) y 1920×1080 automatizados con Playwright, sin desplazamiento horizontal
+- [x] **RNF-08** Chromium ✅ medido · [ ] ⏳ Firefox y WebKit (Safari): configurados en Playwright y en la CI (aquí no pudieron instalarse) · [ ] ⏳ Edge: proyecto `edge` (requiere Edge instalado, `scripts\medir.ps1`)
 
 ## Criterios técnicos (SRS §8.2)
 - [x] OpenAPI 3 generado del código (`go run . openapi`)
-- [x] Cobertura ≥ 80 % en la capa de endpoints — medida 80,7 % (total 80,4 %)
-- [ ] ⏳ DAST/SAST sin hallazgos Altos/Críticos (ZAP, gosec, govulncheck, npm audit) — Etapa 7
+- [x] Cobertura ≥ 80 % en la capa de endpoints — medida 80,9 % (total 80,0 %)
+- [x] DAST/SAST sin hallazgos Altos/Críticos: gosec 0, npm audit (producción) 0, OWASP ZAP 0 altos/medios/bajos tras corregir 2 medios (`docs/seguridad/`) · [ ] ⏳ govulncheck (en la CI)
 
 ## Etapas
 
@@ -109,4 +109,4 @@
 - [x] **Etapa 4 — Planes y consentimientos** (RF-06, RF-07, RF-08, recetas, archivos)
 - [x] **Etapa 5 — Caja y facturación** (RF-12, RN-02)
 - [x] **Etapa 6 — Inventario y honorarios** (RF-13, RF-14)
-- [ ] **Etapa 7 — Calidad y salida** (RNF-01…04, RNF-08, 8.2, despliegue Render + Neon)
+- [x] **Etapa 7 — Calidad y salida** (mediciones, seguridad, navegadores, despliegue preparado) · ⏳ lo que depende de desplegar

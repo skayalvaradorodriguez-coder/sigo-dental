@@ -3,7 +3,7 @@ package seguridad
 import (
 	"crypto/hmac"
 	"crypto/rand"
-	"crypto/sha1"
+	"crypto/sha1" // #nosec G505 -- RFC 6238 (TOTP) usa HMAC-SHA1; es el algoritmo que esperan las apps autenticadoras
 	"crypto/subtle"
 	"encoding/base32"
 	"encoding/binary"
@@ -56,7 +56,7 @@ func CodigoTOTP(secreto string, t time.Time) string {
 	if err != nil {
 		return ""
 	}
-	return HOTP(k, uint64(Paso(t)), DigitosTOTP)
+	return HOTP(k, uint64(max(Paso(t), 0)), DigitosTOTP) // #nosec G115 -- paso ≥ 0 (tiempo Unix / 30)
 }
 
 // VerificarTOTP acepta ±1 intervalo de desfase. Devuelve el paso aceptado para impedir
@@ -80,7 +80,10 @@ func VerificarTOTP(secreto, codigo string, t time.Time, ultimoPaso *int64) (int6
 		if ultimoPaso != nil && p <= *ultimoPaso {
 			continue
 		}
-		if subtle.ConstantTimeCompare([]byte(HOTP(k, uint64(p), DigitosTOTP)), []byte(codigo)) == 1 {
+		if p < 0 {
+			continue
+		}
+		if subtle.ConstantTimeCompare([]byte(HOTP(k, uint64(p), DigitosTOTP)), []byte(codigo)) == 1 { // #nosec G115 -- p ≥ 0 verificado arriba
 			return p, true
 		}
 	}

@@ -2964,6 +2964,64 @@
           "inventario"
         ],
         "x-politica": "permisos:inventario.leer"
+      },
+      "post": {
+        "description": "Acceso: sesión completa + permiso inventario.configurar.\n\nCuerpo JSON: `{nombre, consultorioId?, porDefecto?}` (campos desconocidos ⇒ 400).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Crea una ubicación de stock (bodega o consultorio); la primera queda por defecto.",
+        "tags": [
+          "inventario"
+        ],
+        "x-politica": "permisos:inventario.configurar"
       }
     },
     "/api/login": {

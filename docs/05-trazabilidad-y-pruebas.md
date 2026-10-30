@@ -8,18 +8,19 @@ Estados:
 
 ## 5.1 Cómo se ejecutan
 
-| Suite | Comando | Qué necesita | Resultado (30/10/2026, Etapa 6) |
+| Suite | Comando | Qué necesita | Resultado (30/10/2026, Etapa 7) |
 |---|---|---|---|
-| Unitarias Go (`domain`, `seguridad`, `permisos`, `notificaciones`, `repository`, `facturacion`) | `cd sigo-backend && go test ./domain/... ./seguridad/... ./permisos/... ./notificaciones/... ./repository/...` | Nada | ✅ 33 pruebas |
-| Integración Go (`pruebas/`) contra la API y una base real | `docker compose up -d` y luego `go test ./pruebas/` (usa `.env.test` → base `sigo_dental_test`, que reinicia en cada corrida, y la base 1 de Redis para no mezclar su caché con la de la aplicación) | PostgreSQL | ✅ 61 pruebas |
-| Cobertura de la capa de endpoints | `go test -coverpkg=./controllers/...,./middleware/...,./repository/...,./routes/... -coverprofile=c.out ./...` y `go tool cover -func=c.out` | PostgreSQL | ✅ **80,7 %** |
-| Cobertura de todo el backend | `go test -coverpkg=./... -coverprofile=c.out ./...` | PostgreSQL | 80,4 % (incluye `main.go`, comandos de consola sin pruebas: 0 %) |
+| Unitarias Go (`domain`, `seguridad`, `permisos`, `notificaciones`, `repository`, `facturacion`, `config`) | `cd sigo-backend && go test ./domain/... ./seguridad/... ./permisos/... ./notificaciones/... ./repository/...` | Nada | ✅ 34 pruebas |
+| Integración Go (`pruebas/`) contra la API y una base real | `docker compose up -d` y luego `go test ./pruebas/` (usa `.env.test` → base `sigo_dental_test`, que reinicia en cada corrida, y la base 1 de Redis para no mezclar su caché con la de la aplicación) | PostgreSQL | ✅ 63 pruebas |
+| Cobertura de la capa de endpoints | `go test -coverpkg=./controllers/...,./middleware/...,./repository/...,./routes/... -coverprofile=c.out ./...` y `go tool cover -func=c.out` | PostgreSQL | ✅ **80,9 %** |
+| Cobertura de todo el backend | `go test -coverpkg=./... -coverprofile=c.out ./...` | PostgreSQL | 80,0 % (incluye `main.go`, comandos de consola sin pruebas: 0 %) |
 | Unitarias del frontend (Vitest + Testing Library) | `npm test` | Nada | ✅ 29 pruebas |
 | Lint del frontend | `npm run lint` | Nada | ✅ sin errores |
+| Pruebas de navegador del repositorio (Playwright) | `npm run e2e` (todas) o `npm run e2e:chromium`; `SIGO_URL` = frontend | API + datos demo + `go run . volumen` | ✅ 21 en Chromium (escritorio, tablet, 1920×1080, celular) · ⏳ Firefox/WebKit/Edge (CI) |
 | Prueba de humo por comandos | `powershell -ExecutionPolicy Bypass -File scripts\prueba-api.ps1` (dentro de `sigo-backend`) | API corriendo | ✅ "TODO OK" |
 | Recorrido en navegador (Playwright) | Script de verificación del desarrollo; capturas en `docs/capturas/` | API + `npm run preview` | ✅ Etapas 1–2: 21 pasos con 5 roles · Etapa 3: 10 pasos (odontograma, periodontograma, nota firmada con MFA, adenda, procedimiento, paciente sin anamnesis, asistente, recepción, celular) · Etapa 4: 12 pasos (descuento autorizado por otro odontólogo, presentación, aprobación parcial por recepción, cita desde la tarea, consentimiento en pantalla y por OTP de una tutora, receta con alerta, radiografía, procedimiento desde la tarea, asistente, plantillas) · Etapa 5: 7 pasos (apertura, cobro mixto con cambio, anulación con nota de crédito, cierre ciego sin teórico en pantalla, pagos en la ficha, conciliación y revisión del Auditor, cuentas por cobrar) · Etapa 6: 6 pasos (alerta de stock y entrada, procedimiento con descargo desde el consultorio, honorarios propios, receta de consumo, liquidación, regla nueva) |
 
-> **Cobertura (SRS 8.2: ≥ 80 % en endpoints críticos):** medida por paquete, sin redondear a favor: controladores 80,3 %, middleware 96,4 %, repositorio 81,1 %, rutas 81,9 %, dominio 99,3 %, seguridad 96,5 %. La capa de endpoints en conjunto: 80,7 % (Etapa 6). Lo menos cubierto: comandos de consola de `main.go`, ramas de error de infraestructura (caída de la BD a mitad de una transacción) y el despachador en segundo plano (se prueba su lógica, no el temporizador).
+> **Cobertura (SRS 8.2: ≥ 80 % en endpoints críticos):** medida por paquete, sin redondear a favor: controladores 80,3 %, middleware 96,4 %, repositorio 81,1 %, rutas 81,9 %, dominio 99,3 %, seguridad 96,5 %. La capa de endpoints en conjunto: 80,9 % (Etapa 7). Lo menos cubierto: comandos de consola de `main.go`, ramas de error de infraestructura (caída de la BD a mitad de una transacción) y el despachador en segundo plano (se prueba su lógica, no el temporizador).
 
 ## 5.2 Matriz requisito → prueba
 
@@ -44,17 +45,30 @@ Estados:
 | RN-01 Inmutabilidad clínica | `procedimientos_realizados` + trigger | 3 | Registro firmado con MFA; **`UPDATE` y `DELETE` rechazados por la BD** (la API no tiene rutas para hacerlo); corrección por adenda firmada que no altera el original; el asistente no registra (403) | ✅ `TestProcedimientosRealizadosInmutables`; pacientes y citas sin borrado ✅ `TestReglasEnBaseDeDatos`, `TestRestriccionEnLaBaseDeDatos` |
 | RN-02 Cierre ciego | `CerrarCaja`, `caja_sesiones` / Caja y Cierres | 5 | **El JSON de apertura, mi caja, mis cobros y el cierre no contiene «teorico», «diferencia» ni los montos esperados**; recepción ⇒ 403 en cierres; teórico = fondo + efectivo sin anulados; faltante de 2,00 detectado; tolerancia configurable; descuadre sin nota ⇒ 400; revisada ⇒ inmutable (BD); cobro y anulación tras el cierre rechazados por API y BD | ✅ `TestConciliarCierreCiego`, `TestCajaCobroMixtoYCierreCiego`, `TestMenorPrivilegio`, recorrido en navegador |
 | RN-03 Sin superposición por sillón | `EXCLUDE USING gist` + API | 2 | Solape rechazado aunque cambie el odontólogo (409 con la cita en conflicto); consecutivas y otro sillón permitidos; cancelada libera; **20 peticiones simultáneas ⇒ 1 éxito y 19 rechazos**; `INSERT` directo en la BD también falla | ✅ `TestSuperposicionPorSillon`, `TestCanceladaLiberaSillon`, `TestVeinteSolicitudesSimultaneas`, `TestRestriccionEnLaBaseDeDatos` |
-| RNF-01 < 1,5 s | — | 7 | Medición con datos y hardware definidos | ⏳ |
-| RNF-02 99,9 % | infraestructura | 7 | Monitoreo externo de `/api/health` | ⏳ |
-| RNF-03 150 concurrentes | — | 7 | Prueba de carga (k6) con 150 usuarios virtuales, percentiles p95 | ⏳ |
-| RNF-04 TLS 1.3 / AES-256 | infraestructura | 7 | Escaneo TLS del dominio; evidencia de cifrado del proveedor | ⏳ |
+| RNF-01 < 1,5 s | `herramientas/medir.go`, `e2e/rnf01.spec.js` | 7 | Paciente VOL000001 (10 años): API p95 ≤ 35 ms por pestaña (30 repeticiones); navegador Chromium en frío: máx. 1 002 ms (evolución con 200 notas) | ✅ desarrollo (`docs/mediciones/`) · ⏳ producción |
+| RNF-02 99,9 % | infraestructura | 7 | Monitor externo de `/api/health` (DESPLIEGUE.md §6) | ⏳ tras desplegar |
+| RNF-03 150 concurrentes | `herramientas/medir.go` (`go run . carga`) | 7 | 150 usuarios, 60 s, flujo realista con pausas de 1–3 s: 5 160 pedidos, p95 9 ms, p99 14 ms, 0 % errores (criterio: p95 < 1,5 s y < 1 % errores) | ✅ desarrollo · ⏳ entorno de pruebas igual a producción |
+| RNF-04 TLS 1.3 / AES-256 | infraestructura + `config` | 7 | HSTS en producción; la API no arranca sin `sslmode=require` ✅ `TestProduccionExigeTLSYSecretoPropio`; TLS 1.3 del dominio y cifrado en reposo del proveedor | ⏳ tras desplegar |
 | RNF-05 RBAC | `routes`, `middleware`, `permisos` | 1 | Toda ruta con política; matriz rol × endpoint; campos extra ⇒ 400; token adulterado ⇒ 401 | ✅ `TestTodasLasRutasTienenPolitica`, `TestMatrizDePermisos`, `TestValidaEntradaYRechazaCamposExtra`, `TestSinTokenYTokenAdulterado`, `TestMenorPrivilegio` |
 | RNF-05 MFA | `seguridad/totp.go` | 1 | Sin MFA ⇒ 403 `MFA_REQUERIDO`; vectores RFC 6238; anti-replay; rotación del token; primer ingreso (contraseña + enrolamiento con QR) | ✅ `TestTOTPVectoresRFC6238`, `TestTOTPVentanaYAntiReplay`, `TestMFAObligatorioYRotacionDeToken`, `TestCodigoTOTPNoSeReutiliza`, `TestPrimerIngreso` |
 | RNF-05 Inactividad 15 min | `middleware/auth.go` + `useInactividad` | 1 | 16 min ⇒ 401 `SESION_EXPIRADA` y auditoría; 14 min ⇒ sigue activa; parámetro 5–15 | ✅ `TestCierrePorInactividad`, `TestAjustes` |
 | RNF-05 Bloqueo por intentos | `usuarios` | 1 | 5 fallos ⇒ bloqueo 15 min; mismo mensaje con correo inexistente | ✅ `TestBloqueoTrasCincoIntentos`, `TestMismoErrorSinEnumeracion` |
 | RNF-06 Auditoría | `repository/auditoria.go` + triggers | 1 (base) · 2 (pacientes) | ISO-8601 + IP; `UPDATE`/`DELETE`/`TRUNCATE` rechazados; alteración detectada por la cadena; búsqueda, ficha, anamnesis, expediente, presupuestos, consentimientos, recetas, archivos, caja, inventario y honorarios auditados (lecturas y escrituras); filtros por acción, fecha y usuario | ✅ `TestAuditoriaInmutable`, `TestHashAuditoriaDeterministaYSensible`, `TestLecturasAuditadasYPrivilegios`, `TestOdontogramaEventosEHistorial`, `TestFiltrosDeAuditoria` |
-| RNF-07 Responsive | web | 1+ | Escritorio 1360×900 y celular 390×844 | ✅ capturas del recorrido · tablet y 1920×1080 🟡 automatizar en Etapa 7 |
-| RNF-08 Navegadores | web | 7 | Playwright en Chromium, Firefox y WebKit | 🟡 (hoy sólo Chromium) |
-| 8.2 Cobertura ≥ 80 % | api | todas | `go test -coverpkg` sobre la capa de endpoints | ✅ 80,7 % medido (total del backend 80,4 %) |
-| 8.2 DAST/SAST | CI | 7 | OWASP ZAP + `gosec`/`govulncheck` + `npm audit` | ⏳ |
-| 8.2 OpenAPI 3 | api | todas | `go run . openapi` ⇒ `docs/openapi.json` (104 rutas, generado del registro real) | ✅ `TestOpenAPIGenerado` |
+| RNF-07 Responsive | web | 7 | Playwright: escritorio 1366×768, tablet 834×1112, 1920×1080 y celular; sin desplazamiento horizontal | ✅ `e2e/humo.spec.js` |
+| RNF-08 Navegadores | web | 7 | Playwright: proyectos chromium, firefox, webkit y edge | ✅ Chromium · ⏳ Firefox, WebKit (CI) y Edge (equipo con Edge) |
+| 8.2 Cobertura ≥ 80 % | api | todas | `go test -coverpkg` sobre la capa de endpoints | ✅ 80,9 % medido (total del backend 80,0 %) |
+| 8.2 DAST/SAST | `docs/seguridad/` | 7 | gosec 0 hallazgos; npm audit producción 0; OWASP ZAP (105 rutas, escaneo activo autenticado) 0 altos/medios/bajos; CSP verificada en el navegador | ✅ · ⏳ govulncheck (CI) |
+| 8.2 OpenAPI 3 | api | todas | `go run . openapi` ⇒ `docs/openapi.json` (105 rutas, generado del registro real) | ✅ `TestOpenAPIGenerado` |
+
+## 5.3 Mediciones de la Etapa 7
+
+Condiciones: contenedor Linux de desarrollo con 2 vCPU, PostgreSQL 16 y Redis 7 en la misma máquina,
+API compilada sirviendo la build de producción con la CSP estricta. **No es el entorno de producción**:
+los resultados muestran que el código no es el cuello de botella, pero RNF-01 y RNF-03 deben
+repetirse en un entorno igual al de producción (`scripts\medir.ps1`, o el trabajo `navegadores` de la CI).
+
+- Volumen (A-15): paciente `VOL000001` con 3 versiones de anamnesis, 120 citas, 200 notas SOEP,
+  ~210 eventos de odontograma, 20 periodontogramas completos (3 360 sitios), 300 procedimientos y 10
+  presupuestos de 5 ítems.
+- Resultados completos: `docs/mediciones/rnf01-rnf03.txt` y `docs/mediciones/rnf01-navegador.txt`.
+- Seguridad: `docs/seguridad/resumen.md` y `docs/seguridad/zap-informe.html`.

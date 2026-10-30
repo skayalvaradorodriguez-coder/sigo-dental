@@ -2,6 +2,7 @@
 import { apiFetch } from "./http";
 
 export const getUbicaciones = () => apiFetch("/inventario/ubicaciones");
+export const crearUbicacion = (d) => apiFetch("/inventario/ubicaciones", { method: "POST", body: d });
 export const getInsumos = (todos = false) => apiFetch("/inventario/insumos", { query: { todos: todos ? "true" : "" } });
 export const crearInsumo = (d) => apiFetch("/inventario/insumos", { method: "POST", body: d });
 export const actualizarInsumo = (id, d) => apiFetch(`/inventario/insumos/${id}`, { method: "PATCH", body: d });

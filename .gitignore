@@ -33,3 +33,8 @@ cobertura.html
 .DS_Store
 Thumbs.db
 *.sw?
+
+# Pruebas de navegador (Playwright)
+e2e-informe/
+test-results/
+sigo-backend/zap-informe.html
