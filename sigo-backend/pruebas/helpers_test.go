@@ -23,6 +23,7 @@ import (
 	"sigo-backend/config"
 	"sigo-backend/controllers"
 	"sigo-backend/database"
+	"sigo-backend/notificaciones"
 	"sigo-backend/repository"
 	"sigo-backend/routes"
 	"sigo-backend/seguridad"
@@ -34,6 +35,7 @@ var (
 	registro []routes.Registro
 	pool     *pgxpool.Pool
 	ctl      *controllers.Controllers
+	simulada *notificaciones.Simulada
 	saltar   string
 )
 
@@ -68,7 +70,9 @@ func TestMain(m *testing.M) {
 		fmt.Println("semilla:", err)
 		os.Exit(1)
 	}
-	ctl = controllers.NewControllers(repository.NuevoPostgres(pool), cache.NuevaRedisCache(config.ConectarRedis(cfg.RedisAddr, cfg.RedisPass)), cfg)
+	simulada = &notificaciones.Simulada{}
+	desp := &notificaciones.Despachador{Proveedor: simulada, Clinica: cfg.NombreClinica, Zona: cfg.ZonaHoraria}
+	ctl = controllers.NewControllers(repository.NuevoPostgres(pool), cache.NuevaRedisCache(config.ConectarRedis(cfg.RedisAddr, cfg.RedisPass)), cfg, desp)
 	app, registro = routes.NuevaApp(ctl)
 	code := m.Run()
 	pool.Close()

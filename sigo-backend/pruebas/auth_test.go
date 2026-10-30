@@ -50,8 +50,8 @@ func TestTodasLasRutasTienenPolitica(t *testing.T) {
 			t.Errorf("ruta sin política declarada: %s %s", rt.Method, rt.Path)
 		}
 	}
-	if len(registro) < 20 {
-		t.Errorf("se esperaban al menos 20 rutas registradas, hay %d", len(registro))
+	if len(registro) < 30 {
+		t.Errorf("se esperaban al menos 30 rutas registradas, hay %d", len(registro))
 	}
 }
 
