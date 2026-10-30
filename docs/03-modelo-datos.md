@@ -99,47 +99,18 @@ Guardias en la BD: presupuesto en borrador editable; **presentado ⇒ sólo se r
 
 Todo es sólo inserción salvo `caja_sesiones`, cuya guardia permite ABIERTA → CERRADA (sólo datos de cierre) → REVISADA (sólo datos de revisión).
 
-## 3.6 Modelo completo planificado (Etapa 6)
+## 3.6 Etapa 6 — `006_inventario_honorarios.sql`
 
-```mermaid
-erDiagram
-  SEDE ||--o{ CONSULTORIO : tiene
-  CONSULTORIO ||--o{ SILLON : tiene
-  USUARIO ||--o{ CITA : "atiende (odontólogo)"
-  SILLON ||--o{ CITA : ocupa
-  PACIENTE ||--o{ CITA : agenda
-  PACIENTE ||--o| TUTOR : "si es menor"
-  PACIENTE }o--o| CONVENIO : convenio
-  PACIENTE ||--o{ ANAMNESIS : "versiones"
-  CITA ||--o{ CITA_EVENTO : historial
-  CITA ||--o{ NOTIFICACION : recordatorios
-  PACIENTE ||--o{ NOTA_SOEP : "evolución (E3)"
-  NOTA_SOEP ||--o{ ADENDA : "correcciones (E3)"
-  PACIENTE ||--o{ ODONTOGRAMA_EVENTO : "odontograma (E3)"
-  PACIENTE ||--o{ PERIODONTOGRAMA : "E3"
-  PERIODONTOGRAMA ||--o{ PERIO_SITIO : "6 sitios x diente"
-  PACIENTE ||--o{ PROCEDIMIENTO_REALIZADO : "E3 (RN-01)"
-  PACIENTE ||--o{ CONSENTIMIENTO : "E4"
-  CONSENTIMIENTO_PLANTILLA ||--o{ CONSENTIMIENTO : "versión firmada"
-  PACIENTE ||--o{ RECETA : "E4 (P-01)"
-  PACIENTE ||--o{ ARCHIVO : "E4"
-  TAREA_AGENDABLE ||--o| CITA : "cita activa"
-  TAREA_AGENDABLE ||--o| PROCEDIMIENTO_REALIZADO : "realizada"
-  PACIENTE ||--o{ PRESUPUESTO : "E4"
-  PRESUPUESTO ||--o{ PRESUPUESTO_ITEM : "fases y sesiones"
-  PRESUPUESTO_ITEM ||--o| TAREA_AGENDABLE : "si se aprueba (RF-08)"
-  SESION_CAJA ||--o{ PAGO : "E5"
-  PAGO ||--o{ PAGO_LINEA : "pago mixto"
-  PAGO }o--o| COMPROBANTE : "adaptador de facturación"
-  PROCEDIMIENTO ||--o{ RECETA_CONSUMO : "insumos estándar (E6)"
-  INSUMO ||--o{ MOVIMIENTO_STOCK : "sólo inserción"
-  PROCEDIMIENTO_REALIZADO ||--o{ MOVIMIENTO_STOCK : "descargo automático (RF-14)"
-  REGLA_HONORARIO }o--|| USUARIO : "RF-13"
-```
+| Tabla | Propósito | Puntos clave |
+|---|---|---|
+| `inventario_ubicaciones` | Bodega y consultorios | Una por consultorio (`consultorio_id UNIQUE`); una sola `por_defecto`. |
+| `insumos` | Catálogo | `costo_unitario NUMERIC(12,4)` (último costo), `stock_minimo NUMERIC(12,3)`; sin borrado. |
+| `recetas_consumo` | Consumo estándar | (procedimiento, insumo) → cantidad. Configuración: los cambios se auditan y no tocan descargos pasados. |
+| `movimientos_stock` | Kardex | Cantidad con signo; ENTRADA > 0, SALIDA_PROCEDIMIENTO < 0 y ligada al realizado, AJUSTE con motivo, TRANSFERENCIA con dos patas que suman cero (trigger diferido). Guarda el costo vigente. Sólo inserción. |
+| `reglas_honorario` | RF-13 | Alcance odontólogo y/o procedimiento (NULL = todos), tipo, valor (% ≤ 100 o monto), vigencia. Sólo inserción. |
+| `liquidaciones_honorarios`, `liquidacion_lineas` | Liquidación | Copia del cálculo por línea; `cobro_concepto_id UNIQUE` ⇒ un cobro se liquida una vez. Sólo inserción. |
 
-Reglas previstas en la BD:
-
-- **RF-14 (Etapa 6):** el descargo de insumos ocurre en la **misma transacción** que marcar el procedimiento como realizado.
+Descargo (`RegistrarRealizado`): `INSERT` del procedimiento y `INSERT … SELECT` de la receta en la misma transacción.
 
 ## 3.7 Convenciones clínicas
 

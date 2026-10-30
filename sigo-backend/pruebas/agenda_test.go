@@ -297,7 +297,11 @@ func TestCatalogos(t *testing.T) {
 		t.Error("la caché debe invalidarse al crear un sillón")
 	}
 	espera(t, llamar(t, "POST", "/api/catalogos/sillones", rec, map[string]any{"consultorioId": consultorio, "nombre": "Otro"}), 403, "recepción no crea")
-	espera(t, llamar(t, "GET", "/api/catalogos/sillones", ingresar(t, auditor), nil), 403, "auditor no ve catálogos")
+	// Desde la Etapa 6 el Auditor lee catálogos (procedimientos y odontólogos para reglas de honorarios
+	// y recetas de consumo), pero no los modifica.
+	audTok := ingresar(t, auditor)
+	espera(t, llamar(t, "GET", "/api/catalogos/sillones", audTok, nil), 200, "auditor lee catálogos")
+	espera(t, llamar(t, "POST", "/api/catalogos/sillones", audTok, map[string]any{"consultorioId": consultorio, "nombre": "Otro"}), 403, "auditor no crea")
 
 	// Un sillón desactivado no admite citas.
 	tmp := llamar(t, "POST", "/api/catalogos/sillones", adm, map[string]any{"consultorioId": consultorio, "nombre": "Sillón Temporal"}).Body

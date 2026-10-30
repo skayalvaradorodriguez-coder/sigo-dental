@@ -92,14 +92,16 @@
 - [x] Pantallas: caja de recepción (apertura, cobro con cambio, cobros, anulación, cierre), conciliación del Auditor, cuentas por cobrar, pestaña Pagos de la ficha, panel
 - [x] **Verificación:** ninguna respuesta al recepcionista incluye el teórico (se revisa el JSON completo); sumas al centavo; 10 cobros simultáneos del mismo procedimiento ⇒ 1 éxito; cobro después del cierre rechazado por la API y la BD
 
-## ETAPA 6 — Inventario y honorarios (rama `etapa-6-inventario-honorarios`)
+## ETAPA 6 — Inventario y honorarios ✅ (rama `etapa-6-inventario-honorarios`)
 
-> RF-13, RF-14.
+> RF-13, RF-14. Supuestos S-35…S-38.
 
-- [ ] Insumos por ubicación, movimientos de stock sólo inserción, recetas de consumo por procedimiento
-- [ ] Descargo automático en la misma transacción que el procedimiento realizado
-- [ ] Reglas de honorarios (% fijo, monto fijo, % neto) y liquidación por periodo
-- [ ] **Verificación:** casos numéricos de las 3 reglas; descargo atómico (si falla, nada se descuenta)
+- [x] Migración `006_inventario_honorarios.sql`: `inventario_ubicaciones`, `insumos`, `recetas_consumo`, `movimientos_stock` (sólo inserción; transferencias que suman cero), `reglas_honorario` (sólo inserción, con vigencia), `liquidaciones_honorarios` + `liquidacion_lineas` (un concepto cobrado se liquida una vez)
+- [x] Descargo automático en la misma transacción que el procedimiento realizado; ubicación indicada, del consultorio de la cita o bodega; saldo negativo permitido con alerta
+- [x] Entradas (último costo), ajustes con motivo y transferencias; stock por ubicación con alertas de mínimo
+- [x] Tres reglas de honorarios con precedencia por especificidad y vigencia; cálculo sobre lo cobrado; liquidación por periodo
+- [x] Pantallas: inventario (stock, kardex, movimientos, insumos, recetas) y honorarios (mis honorarios, liquidar, liquidaciones, reglas); ubicación de descargo al registrar un procedimiento
+- [x] **Verificación:** casos numéricos de las 3 reglas (40 % de 35 = 14,00; 50 % de 230 − 30 − 3,30 = 98,35; fijo 12,00); descargo atómico con falla simulada en la BD (no queda el procedimiento); liquidar dos veces ⇒ 409
 
 ## ETAPA 7 — Calidad y salida (rama `etapa-7-calidad`)
 

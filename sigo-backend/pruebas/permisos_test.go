@@ -27,7 +27,7 @@ func TestMatrizDePermisos(t *testing.T) {
 		{"GET", "/api/pacientes", []string{permisos.PacientesLeer}},
 		{"GET", "/api/citas?desde=" + desde + "&hasta=" + hasta, []string{permisos.CitasLeer}},
 		{"GET", "/api/notificaciones", []string{permisos.CitasLeer}},
-		{"GET", "/api/catalogos/estructura", []string{permisos.CatalogosGestionar, permisos.CitasLeer, permisos.PacientesLeer}},
+		{"GET", "/api/catalogos/estructura", []string{permisos.CatalogosGestionar, permisos.CitasLeer, permisos.PacientesLeer, permisos.InventarioLeer, permisos.HonorariosTodos}},
 		{"GET", "/api/pacientes/" + ana + "/odontograma", []string{permisos.ClinicaLeer}},
 		{"GET", "/api/pacientes/" + ana + "/notas", []string{permisos.ClinicaLeer}},
 		{"GET", "/api/pacientes/" + ana + "/procedimientos", []string{permisos.ClinicaLeer}},
@@ -41,6 +41,10 @@ func TestMatrizDePermisos(t *testing.T) {
 		{"GET", "/api/pacientes/" + ana + "/cobros", []string{permisos.CajaOperar, permisos.CajaRevisar}},
 		{"GET", "/api/caja/cierres", []string{permisos.CajaRevisar}},
 		{"GET", "/api/caja/cuentas-por-cobrar", []string{permisos.CajaRevisar}},
+		{"GET", "/api/inventario/stock", []string{permisos.InventarioLeer}},
+		{"GET", "/api/inventario/recetas", []string{permisos.InventarioLeer}},
+		{"GET", "/api/honorarios/reglas", []string{permisos.HonorariosPropios, permisos.HonorariosTodos, permisos.HonorariosConfigurar}},
+		{"GET", "/api/honorarios/liquidaciones", []string{permisos.HonorariosPropios, permisos.HonorariosTodos}},
 	}
 	usuarios := map[string]string{permisos.AdminTI: admin, permisos.Recepcionista: recepcion, permisos.Odontologo: odontologo,
 		permisos.Asistente: asistente, permisos.Auditor: auditor}

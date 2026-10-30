@@ -594,7 +594,8 @@ type realizadoIn struct {
 	Superficies     []string `json:"superficies"`
 	Observaciones   string   `json:"observaciones"`
 	Codigo          string   `json:"codigo"`
-	TareaID         string   `json:"tareaId"` // tarea del presupuesto aprobado que se realiza (RF-08)
+	TareaID         string   `json:"tareaId"`     // tarea del presupuesto aprobado que se realiza (RF-08)
+	UbicacionID     string   `json:"ubicacionId"` // de dónde se descargan los insumos (RF-14); opcional
 }
 
 // RegistrarRealizado — POST /api/pacientes/:id/procedimientos: queda firmado e inmutable (RN-01).
@@ -607,6 +608,7 @@ func (h *Controllers) RegistrarRealizado(c *fiber.Ctx) error {
 	errs.UUID("procedimientoId", in.ProcedimientoID, in.TareaID == "")
 	errs.UUID("citaId", in.CitaID, false)
 	errs.UUID("tareaId", in.TareaID, false)
+	errs.UUID("ubicacionId", in.UbicacionID, false)
 	errs.Longitud("observaciones", in.Observaciones, 0, 2000, "Observaciones: hasta 2000 caracteres.")
 	sups := []string{}
 	if in.Diente != nil && !domain.DienteValido(*in.Diente) {
@@ -684,7 +686,7 @@ func (h *Controllers) RegistrarRealizado(c *fiber.Ctx) error {
 		"odontologo": u.ID, "realizadoEn": iso(cuando)})
 	id, err := h.Repo.RegistrarRealizado(ctx, repository.NuevoRealizado{PacienteID: p.ID, ProcedimientoID: in.ProcedimientoID,
 		OdontologoID: u.ID, CitaID: cita, Observaciones: validacion.Opcional(in.Observaciones), Diente: in.Diente,
-		Superficies: sups, RealizadoEn: cuando, Hash: hash, TareaID: tarea})
+		Superficies: sups, RealizadoEn: cuando, Hash: hash, TareaID: tarea, UbicacionID: validacion.Opcional(in.UbicacionID)})
 	if errors.Is(err, repository.ErrDuplicado) {
 		return responder(c, models.NewAPIError(409, "TAREA_YA_REALIZADA", "Esa tarea ya se registró como realizada."))
 	}

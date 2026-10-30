@@ -11,6 +11,8 @@ import Catalogos from "./pages/admin/Catalogos";
 import Usuarios from "./pages/admin/Usuarios";
 import { CambiarPassword, ConfigurarMFA, Login, VerificarMFA } from "./pages/auth/PasosIngreso";
 import Caja from "./pages/caja/Caja";
+import Honorarios from "./pages/honorarios/Honorarios";
+import Inventario from "./pages/inventario/Inventario";
 import Consentimientos from "./pages/consentimientos/Consentimientos";
 import Expediente from "./pages/expediente/Expediente";
 import { ModuloPendiente, NoEncontrada } from "./pages/ModuloPendiente";
@@ -31,6 +33,8 @@ const PANTALLAS = {
   "/presupuestos": Presupuestos,
   "/consentimientos": Consentimientos,
   "/caja": Caja,
+  "/inventario": Inventario,
+  "/honorarios": Honorarios,
 };
 
 // Mientras falte un paso del inicio de sesión (siguientePaso), no se muestra ninguna otra pantalla.

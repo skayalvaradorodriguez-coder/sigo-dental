@@ -46,6 +46,7 @@ Config: `.env` opcional (ver `.env.example`): `VITE_API_URL` vacía = mismo orig
 | `services/citasService.js` | Citas, reprogramar, estado, bandeja de mensajes. |
 | `services/expedienteService.js` | Odontograma, periodontogramas, notas SOEP (firma, adendas), procedimientos realizados. |
 | `services/cajaService.js` | Caja (sesión, cobros, anulación, comprobante, cierre ciego) y vistas del Auditor. |
+| `services/inventarioService.js` | Inventario (ubicaciones, insumos, stock, kardex, movimientos, recetas de consumo) y honorarios (reglas, cálculo, liquidaciones). |
 | `services/planesService.js` | Presupuestos, tareas, consentimientos (vista previa, firma, OTP), plantillas, recetas, archivos (multipart y descarga como blob). |
 | `context/AuthContext.jsx` (+ `AuthContextValue.js`, `useAuth.jsx`) | Perfil, permisos, `puede(...)`, `ingresar`, `aplicarSesion` (tokens rotados por MFA), `salir`. |
 | `hooks/useApi.js` | Lectura `{data, isLoading, error, recargar}` (igual al del catálogo). |
@@ -84,6 +85,8 @@ Config: `.env` opcional (ver `.env.example`): `VITE_API_URL` vacía = mismo orig
 | `pages/caja/CajaRecepcion.jsx`, `FormularioCobro.jsx`, `ListaCobros.jsx` | RF-12/RN-02: apertura, cobro con pago mixto y cambio, comprobantes, anulación, cierre ciego. |
 | `pages/caja/Cierres.jsx`, `PagosPaciente.jsx` | Conciliación del Auditor, cuentas por cobrar a aseguradoras, pagos en la ficha. |
 | `components/SelectorPaciente.jsx` | Buscador de pacientes con alertas (agenda y caja). |
+| `pages/inventario/Inventario.jsx` | RF-14: stock con alertas, kardex, registrar entrada/ajuste/transferencia, insumos y recetas de consumo. |
+| `pages/honorarios/Honorarios.jsx` | RF-13: mis honorarios, liquidar por periodo, liquidaciones (impresión) y reglas. |
 | `pages/ModuloPendiente.jsx` | Pantalla honesta de módulos de etapas futuras. |
 | `pruebas/` | Vitest + Testing Library. |
 
@@ -109,10 +112,12 @@ Config: `.env` (copiar de `.env.example`); pruebas: `.env.test` (base `sigo_dent
 | `controllers/presupuestoController.go` | RF-07/RF-08: presupuestos, totales, descuentos con cuatro ojos, presentación con hash, decisión, tareas. |
 | `controllers/documentosController.go` | RF-06 consentimientos (vista previa, manuscrita, OTP), plantillas, recetas con alertas, archivos con SHA-256. |
 | `controllers/cajaController.go` | RF-12/RN-02: caja, cobros, comprobantes, anulación, cierre ciego, conciliación y cuentas por cobrar. |
+| `controllers/inventarioController.go` | RF-14: insumos, stock, kardex, movimientos, recetas de consumo. |
+| `controllers/honorariosController.go` | RF-13: reglas, cálculo sobre lo cobrado, liquidaciones. |
 | `controllers/clinicaController.go` | Expediente: odontograma, periodontograma, notas SOEP (bloqueo, firma, adendas), procedimientos realizados; re-autenticación MFA y hashes. |
-| `repository/` | `DBRepository` (interfaz) + `Postgres`: usuarios/sesiones, auditoría encadenada, ajustes, catálogos, pacientes, citas, notificaciones, expediente clínico (`clinica.go`), presupuestos y tareas (`presupuestos.go`), consentimientos, recetas y archivos (`documentos.go`), caja y cobros (`caja.go`). |
+| `repository/` | `DBRepository` (interfaz) + `Postgres`: usuarios/sesiones, auditoría encadenada, ajustes, catálogos, pacientes, citas, notificaciones, expediente clínico (`clinica.go`), presupuestos y tareas (`presupuestos.go`), consentimientos, recetas y archivos (`documentos.go`), caja y cobros (`caja.go`), inventario (`inventario.go`; el descargo está en `clinica.go` → `RegistrarRealizado`), honorarios (`honorarios.go`). |
 | `cache/cache.go` | `CacheRepository` + `RedisCache` (nil-safe). |
-| `domain/` | Reglas puras: alertas, estados de cita, edad y día local, numeración dental, superficies, hallazgos, estado del odontograma, NIC, dinero en centavos y totales, alertas de receta, pago mixto y conciliación del cierre. |
+| `domain/` | Reglas puras: alertas, estados de cita, edad y día local, numeración dental, superficies, hallazgos, estado del odontograma, NIC, dinero en centavos y totales, alertas de receta, pago mixto y conciliación del cierre, reglas y cálculo de honorarios, cantidades con 3 decimales. |
 | `facturacion/` | Puerto `Proveedor` hacia la autoridad tributaria y proveedor `Simulado` (números SIM-…). |
 | `almacenamiento/` | Interfaz `Almacen`: `Local` (disco, `ARCHIVOS_DIR`, nunca sobrescribe) y `Memoria` (pruebas). |
 | `notificaciones/` | Planificador, mensajería (`Simulada`) y despachador. |
@@ -148,4 +153,7 @@ Config: `.env` (copiar de `.env.example`); pruebas: `.env.test` (base `sigo_dent
 | Caja (Auditor) | `GET /caja/cierres`, `GET /caja/cierres/:id`, `POST /caja/cierres/:id/revisar`, `GET /caja/cuentas-por-cobrar` | `caja.revisar` |
 | Caja (ambos) | `GET /cobros/:id`, `GET /pacientes/:id/cobros`, `GET /facturacion/proveedor` | `caja.operar` o `caja.revisar` |
 
-Detalle de cada una (cuerpos y respuestas): `docs/openapi.json` (89 rutas).
+| Inventario | `GET /inventario/ubicaciones`, `/insumos`, `/stock`, `/movimientos`, `/recetas`; `POST /inventario/movimientos`; `POST /inventario/insumos`, `PATCH /inventario/insumos/:id`, `PUT /inventario/recetas/:procedimientoId` | leer: `inventario.leer` · movimientos: `inventario.escribir` · insumos y recetas: `inventario.configurar` |
+| Honorarios | `GET /honorarios/reglas`, `/calculo`, `/liquidaciones`, `/liquidaciones/:id`; `POST /honorarios/reglas`, `POST /honorarios/liquidaciones` | ver: `honorarios.propios` (sólo lo suyo) o `honorarios.todos` · reglas: `honorarios.configurar` · liquidar: `honorarios.todos` |
+
+Detalle de cada una (cuerpos y respuestas): `docs/openapi.json` (104 rutas).

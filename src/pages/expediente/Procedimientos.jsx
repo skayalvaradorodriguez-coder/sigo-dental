@@ -8,6 +8,7 @@ import { useApi } from "../../hooks/useApi";
 import { useNotacion } from "../../hooks/useNotacion";
 import { getProcedimientos } from "../../services/catalogosService";
 import { adendaRealizado, getRealizados, registrarRealizado } from "../../services/expedienteService";
+import { getUbicaciones } from "../../services/inventarioService";
 import { getTareas } from "../../services/planesService";
 import {
   etiquetaSuperficie,
@@ -29,7 +30,16 @@ const Formulario = ({ pacienteId, notacion, alContinuar, alCancelar }) => {
   // Tareas del presupuesto aprobado aún no realizadas (RF-08): al elegir una, se completan sus datos.
   const tareas = useApi(useCallback(() => getTareas(pacienteId).catch(() => []), [pacienteId]));
   const abiertas = (tareas.data ?? []).filter((t) => t.estado !== "REALIZADA");
-  const [f, setF] = useState({ tareaId: "", procedimientoId: "", diente: "", superficies: [], observaciones: "" });
+  // Inventario (RF-14): de dónde se descuentan los insumos de la receta de consumo.
+  const ubicaciones = useApi(useCallback(() => getUbicaciones().catch(() => []), []));
+  const [f, setF] = useState({
+    tareaId: "",
+    procedimientoId: "",
+    diente: "",
+    superficies: [],
+    observaciones: "",
+    ubicacionId: "",
+  });
   const [error, setError] = useState("");
   const d = Number(f.diente);
   return (
@@ -41,6 +51,7 @@ const Formulario = ({ pacienteId, notacion, alContinuar, alCancelar }) => {
         if (!f.procedimientoId) return setError("Seleccione el procedimiento.");
         alContinuar({
           ...(f.tareaId ? { tareaId: f.tareaId } : {}),
+          ...(f.ubicacionId ? { ubicacionId: f.ubicacionId } : {}),
           procedimientoId: f.procedimientoId,
           ...(f.diente ? { diente: d, superficies: f.superficies } : {}),
           observaciones: f.observaciones.trim(),
@@ -120,6 +131,22 @@ const Formulario = ({ pacienteId, notacion, alContinuar, alCancelar }) => {
             ))}
           </div>
         </fieldset>
+      )}
+      {ubicaciones.data?.length > 0 && (
+        <Select
+          label="Descontar insumos de"
+          value={f.ubicacionId}
+          onChange={(e) => setF({ ...f, ubicacionId: e.target.value })}
+        >
+          <option value="">Automático (consultorio de la cita o bodega)</option>
+          {ubicaciones.data
+            .filter((u) => u.activo)
+            .map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.nombre}
+              </option>
+            ))}
+        </Select>
       )}
       <Textarea
         label="Observaciones"
