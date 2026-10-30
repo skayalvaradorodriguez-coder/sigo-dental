@@ -86,7 +86,20 @@ Así, aunque alguien escriba SQL directo, no puede editar una nota fuera de plaz
 
 Guardias en la BD: presupuesto en borrador editable; **presentado ⇒ sólo se registra la decisión** (ni título, ni ítems, ni montos); decidido ⇒ nada; nunca se borra. Consentimiento: nunca se borra, el texto y su hash nunca cambian y, firmado, nada cambia.
 
-## 3.5 Modelo completo planificado (Etapas 5–6)
+## 3.5 Etapa 5 — `005_caja.sql`
+
+| Tabla | Propósito | Puntos clave |
+|---|---|---|
+| `caja_sesiones` | Caja del recepcionista | Índice único parcial: una ABIERTA por cajero. Al cerrar: `declarado_*` y `teorico_*` (efectivo con fondo, tarjeta, transferencia) guardados en la misma transacción. `CHECK` de coherencia por estado. |
+| `cobros` | RF-12 | `numero` de recibo interno (secuencia); `total > 0`. Trigger: sólo en caja ABIERTA (`FOR SHARE`). Trigger **diferido**: conceptos = pagos = total al confirmar. |
+| `cobro_conceptos` | Qué se cobra | Procedimiento realizado (con su precio) o procedimiento del catálogo. Trigger: un realizado no se cobra dos veces (con `FOR UPDATE` del realizado), salvo anulación. |
+| `cobro_pagos` | Pago mixto | `medio` EFECTIVO/TARJETA/TRANSFERENCIA/SEGURO; tarjeta y transferencia exigen referencia; seguro exige convenio (cuenta por cobrar). |
+| `cobros_anulaciones` | Anulación | Una por cobro, con motivo; sólo en caja abierta. |
+| `comprobantes` | Facturación | Cada intento es una fila (AUTORIZADO, RECHAZADO o ERROR) con el documento enviado y su hash; a lo sumo una FACTURA y una NOTA_CREDITO autorizadas por cobro. |
+
+Todo es sólo inserción salvo `caja_sesiones`, cuya guardia permite ABIERTA → CERRADA (sólo datos de cierre) → REVISADA (sólo datos de revisión).
+
+## 3.6 Modelo completo planificado (Etapa 6)
 
 ```mermaid
 erDiagram
@@ -126,10 +139,9 @@ erDiagram
 
 Reglas previstas en la BD:
 
-- **RN-02 (Etapa 5):** la respuesta del cierre al recepcionista nunca incluye el total teórico; sólo `caja.revisar` (Auditor) lo ve.
 - **RF-14 (Etapa 6):** el descargo de insumos ocurre en la **misma transacción** que marcar el procedimiento como realizado.
 
-## 3.6 Convenciones clínicas
+## 3.7 Convenciones clínicas
 
 ### Numeración dental
 

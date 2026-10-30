@@ -13,6 +13,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"sigo-backend/almacenamiento"
+	"sigo-backend/facturacion"
 	"strings"
 	"testing"
 	"time"
@@ -32,13 +33,14 @@ import (
 )
 
 var (
-	app      *fiber.App
-	registro []routes.Registro
-	pool     *pgxpool.Pool
-	ctl      *controllers.Controllers
-	almacen  = &almacenamiento.Memoria{}
-	simulada *notificaciones.Simulada
-	saltar   string
+	app        *fiber.App
+	registro   []routes.Registro
+	pool       *pgxpool.Pool
+	ctl        *controllers.Controllers
+	almacen    = &almacenamiento.Memoria{}
+	facturador = &facturacion.Simulado{}
+	simulada   *notificaciones.Simulada
+	saltar     string
 )
 
 const pass = semilla.PasswordDemo
@@ -76,6 +78,7 @@ func TestMain(m *testing.M) {
 	desp := &notificaciones.Despachador{Proveedor: simulada, Clinica: cfg.NombreClinica, Zona: cfg.ZonaHoraria}
 	ctl = controllers.NewControllers(repository.NuevoPostgres(pool), cache.NuevaRedisCache(config.ConectarRedis(cfg.RedisAddr, cfg.RedisPass, cfg.RedisDB)), cfg, desp)
 	ctl.Archivos = almacen
+	ctl.Facturacion = facturador
 	app, registro = routes.NuevaApp(ctl)
 	code := m.Run()
 	pool.Close()

@@ -16,7 +16,7 @@ import {
   Users,
 } from "lucide-react";
 
-export const ETAPA_ACTUAL = 4;
+export const ETAPA_ACTUAL = 5;
 
 export const MODULOS = [
   { ruta: "/", etiqueta: "Panel", icono: LayoutDashboard, permisos: [], grupo: "principal", etapa: 1 },
@@ -80,7 +80,7 @@ export const MODULOS = [
     etapa: 5,
     requisitos: "RF-12, RN-02",
     resumen:
-      "Cobros con pagos mixtos, cierre de caja ciego y emisión de comprobantes mediante un adaptador de facturación electrónica.",
+      "Cobros con pagos mixtos, cierre de caja ciego conciliado por el Auditor y comprobantes por un adaptador de facturación (simulado).",
   },
   {
     ruta: "/inventario",

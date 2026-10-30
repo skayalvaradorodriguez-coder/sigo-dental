@@ -198,6 +198,25 @@ type DBRepository interface {
 	RegistrarArchivo(ctx context.Context, a models.Archivo, usuarioID string) (string, error)
 	ArchivosPaciente(ctx context.Context, pacienteID string) ([]models.Archivo, error)
 	ArchivoPorID(ctx context.Context, id string) (*models.Archivo, error)
+
+	// Etapa 5 — caja y facturación
+	CajaAbierta(ctx context.Context, cajeroID string) (*models.CajaSesion, error)
+	AbrirCaja(ctx context.Context, cajeroID, fondo string) (string, error)
+	CerrarCaja(ctx context.Context, sesionID string, declarado map[string]string, nota *string) error
+	Cierres(ctx context.Context, estado string) ([]models.CierreCaja, error)
+	CierrePorID(ctx context.Context, id string) (*models.CierreCaja, error)
+	RevisarCierre(ctx context.Context, id, usuarioID string, nota *string) error
+	PorCobrar(ctx context.Context, pacienteID string) ([]models.PorCobrar, error)
+	CrearCobro(ctx context.Context, n NuevoCobro) (string, error)
+	AnularCobro(ctx context.Context, cobroID, motivo, usuarioID string) error
+	CobrosSesion(ctx context.Context, sesionID string) ([]models.Cobro, error)
+	CobrosPaciente(ctx context.Context, pacienteID string) ([]models.Cobro, error)
+	CobroPorID(ctx context.Context, id string) (*models.Cobro, error)
+	EstadoCajaDeCobro(ctx context.Context, cobroID string) (estado, cajeroID string, err error)
+	SiguienteSecuencial(ctx context.Context, tipo string) (int64, error)
+	RegistrarComprobante(ctx context.Context, n NuevoComprobante) error
+	CuentasPorCobrarSeguros(ctx context.Context) ([]models.CuentaSeguro, error)
+	CierresPorRevisar(ctx context.Context) (int, error)
 }
 
 var _ DBRepository = (*Postgres)(nil)

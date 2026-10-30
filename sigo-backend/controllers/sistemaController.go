@@ -168,6 +168,20 @@ func (h *Controllers) Panel(c *fiber.Ctx) error {
 		}
 		w["pacientes"] = fiber.Map{"total": total, "anamnesisPendiente": sin}
 	}
+	if a.Puede(permisos.CajaOperar) { // sin montos (RN-02)
+		caja := fiber.Map{"abierta": false}
+		if s, err := h.Repo.CajaAbierta(ctx, a.Usuario.ID); err == nil {
+			caja = fiber.Map{"abierta": true, "abiertaEn": s.AbiertaEn, "cobros": s.Cobros}
+		}
+		w["caja"] = caja
+	}
+	if a.Puede(permisos.CajaRevisar) {
+		n, err := h.Repo.CierresPorRevisar(ctx)
+		if err != nil {
+			return h.errorInterno(c, err)
+		}
+		w["cierres"] = fiber.Map{"porRevisar": n}
+	}
 	n, _ := h.Repo.SesionesAbiertas(ctx, a.Usuario.ID)
 	w["yo"] = fiber.Map{"ultimoAcceso": a.Usuario.UltimoAcceso, "sesionesAbiertas": n}
 	return c.JSON(fiber.Map{"generadoEn": time.Now().UTC(), "widgets": w})

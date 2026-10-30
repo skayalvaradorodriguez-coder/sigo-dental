@@ -90,6 +90,21 @@ var Docs = map[string]Doc{
 	"GET /api/pacientes/:id/archivos":                      {"Radiografías, fotos y documentos del paciente.", "", 200},
 	"POST /api/pacientes/:id/archivos":                     {"Sube un archivo (multipart: archivo, categoria, descripcion?). Sólo JPG/PNG/PDF por contenido, máx. 10 MB; guarda su SHA-256.", "multipart/form-data", 201},
 	"GET /api/archivos/:id/contenido":                      {"Descarga el archivo tras verificar su SHA-256 (alterado ⇒ 409 ARCHIVO_ALTERADO). Cache-Control: no-store.", "", 200},
+	"GET /api/caja/sesion":                                 {"Caja abierta del recepcionista: apertura, fondo y cantidad de cobros. Nunca totales ni teórico (RN-02).", "", 200},
+	"POST /api/caja/sesion":                                {"Abre la caja con el fondo inicial. Una sola abierta por recepcionista (409 CAJA_YA_ABIERTA).", "{fondoInicial}", 201},
+	"POST /api/caja/sesion/cerrar":                         {"Cierre ciego (RN-02): declara lo contado por medio; responde sólo la confirmación. El teórico se calcula y guarda en la misma transacción.", "{efectivo, tarjeta, transferencia, nota?}", 200},
+	"GET /api/caja/cobros":                                 {"Cobros de la caja abierta (cada uno con su total; sin sumas por medio).", "", 200},
+	"GET /api/pacientes/:id/por-cobrar":                    {"Procedimientos realizados sin cobro vigente, con el monto del presupuesto aprobado o el arancel.", "", 200},
+	"GET /api/pacientes/:id/cobros":                        {"Historial de cobros del paciente con comprobantes y anulaciones (lectura auditada).", "", 200},
+	"POST /api/cobros":                                     {"Cobro con pago mixto (RF-12). Los montos los fija el sistema; los pagos deben sumar el total (400 PAGO_NO_CUADRA). Emite la factura con el proveedor SIMULADO.", "{pacienteId, conceptos[{procedimientoRealizadoId} | {procedimientoId}], pagos[{medio (EFECTIVO|TARJETA|TRANSFERENCIA|SEGURO), monto, referencia?, convenioId?}]}", 201},
+	"GET /api/cobros/:id":                                  {"Detalle del cobro: conceptos, pagos, anulación y todos los intentos de comprobante.", "", 200},
+	"POST /api/cobros/:id/anular":                          {"Anula un cobro de la caja abierta propia (nunca se borra); con factura autorizada emite nota de crédito.", "{motivo}", 200},
+	"POST /api/cobros/:id/comprobante":                     {"Reintenta la factura (o la nota de crédito) si el último intento no quedó autorizado.", "", 200},
+	"GET /api/facturacion/proveedor":                       {"Proveedor de facturación en uso y si es SIMULADO.", "", 200},
+	"GET /api/caja/cierres":                                {"Auditor: sesiones con teórico, declarado y diferencia por medio (?estado=ABIERTA|CERRADA|REVISADA).", "", 200},
+	"GET /api/caja/cierres/:id":                            {"Auditor: conciliación de una sesión con sus cobros.", "", 200},
+	"POST /api/caja/cierres/:id/revisar":                   {"Auditor: marca el cierre como revisado; con diferencias fuera de tolerancia exige nota.", "{nota?}", 200},
+	"GET /api/caja/cuentas-por-cobrar":                     {"Auditor: montos pagados con seguro pendientes de cobrar a cada aseguradora (S-06).", "", 200},
 }
 
 // OpenAPI arma un documento OpenAPI 3.0 a partir del registro de rutas.

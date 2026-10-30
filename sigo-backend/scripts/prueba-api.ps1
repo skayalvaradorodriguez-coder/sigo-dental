@@ -251,6 +251,30 @@ $alerta = Espera (Api "POST" "/api/pacientes/$($ana.id)/recetas" $doc @{ items =
 if ($alerta) { Ok "$($alerta.code): $($alerta.extra.alertas[0].motivo)" }
 
 # ---------------------------------------------------------------------------------------
+Titulo "8. Caja: pago mixto, comprobante SIMULADO y cierre ciego (RF-12, RN-02)"
+$ap = Api "POST" "/api/caja/sesion" $rec @{ fondoInicial = "50.00" }
+if ($ap.Status -eq 409) { Ok "La caja ya estaba abierta (se usa la misma)" } else { Espera $ap 201 "Caja abierta con fondo 50.00" | Out-Null }
+$val = @($procs | Where-Object { $_.codigo -eq "VAL-01" })[0]
+$cb = Espera (Api "POST" "/api/cobros" $rec @{ pacienteId = $ana.id; conceptos = @(@{ procedimientoId = $val.id })
+    pagos = @(@{ medio = "EFECTIVO"; monto = "10.00" }, @{ medio = "TARJETA"; monto = "10.00"; referencia = "VOUCHER-SCRIPT" }) }) 400 "Pagos que no suman el total: rechazado"
+if ($cb) { Ok "$($cb.code): el total es $($cb.extra.total)" }
+$cb = Espera (Api "POST" "/api/cobros" $rec @{ pacienteId = $ana.id; conceptos = @(@{ procedimientoId = $val.id })
+    pagos = @(@{ medio = "EFECTIVO"; monto = "10.00" }, @{ medio = "TARJETA"; monto = "15.00"; referencia = "VOUCHER-SCRIPT" }) }) 201 "Cobro con efectivo + tarjeta"
+if ($cb) { $f = $cb.comprobantes[0]; Ok "Recibo N.º $($cb.numero) · $($cb.total) · factura $($f.numero) ($($f.estado), simulado: $($f.simulado))" }
+$miCaja = Espera (Api "GET" "/api/caja/sesion" $rec) 200 "Mi caja (recepción)"
+$cierre = Espera (Api "POST" "/api/caja/sesion/cerrar" $rec @{ efectivo = "59.00"; tarjeta = "15.00"; transferencia = "0" }) 200 "Cierre ciego"
+$json = ($miCaja | ConvertTo-Json -Depth 6) + ($cierre | ConvertTo-Json -Depth 6)
+if ($json -match "teorico|diferencia") { Falla "La respuesta al recepcionista revela el teórico" } else { Ok "Ninguna respuesta al recepcionista incluye el teórico ni la diferencia (RN-02): $($cierre.mensaje)" }
+Espera (Api "GET" "/api/caja/cierres" $rec) 403 "Recepción NO ve la conciliación" | Out-Null
+$aud = IniciarSesion "auditor@demo.sigo"
+$cs = Espera (Api "GET" "/api/caja/cierres?estado=CERRADA" $aud) 200 "Auditor: cierres por revisar"
+$mio = @($cs | Where-Object { $_.id -eq $cierre.sesionId })[0]
+if ($mio) {
+    foreach ($d in $mio.diferencias) { Ok "  $($d.medio): teórico $($d.teorico) · declarado $($d.declarado) · diferencia $($d.diferencia)" }
+    $rv = Espera (Api "POST" "/api/caja/cierres/$($mio.id)/revisar" $aud @{ nota = "Revisado por el script de prueba." }) 200 "Cierre revisado por el Auditor"
+} else { Falla "El cierre no aparece para el Auditor" }
+
+# ---------------------------------------------------------------------------------------
 Write-Host ""
 if ($script:fallas -eq 0) { Write-Host "TODO OK" -ForegroundColor Green; exit 0 }
 Write-Host "$($script:fallas) comprobación(es) fallaron" -ForegroundColor Red

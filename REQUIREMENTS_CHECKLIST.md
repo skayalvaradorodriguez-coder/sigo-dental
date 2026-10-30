@@ -11,12 +11,12 @@
 
 | Campo | Valor |
 |---|---|
-| **Etapa actual** | Etapa 4 completada · siguiente: Etapa 5 (caja y facturación) |
-| **Última tarea completada** | Etapa 4: presupuestos por fases con descuentos autorizados, aprobación parcial → tareas agendables, consentimientos (firma en pantalla u OTP), recetas con alertas y archivos con SHA-256 (2026-10-30) |
-| **Siguiente tarea pendiente** | E5-01: sesión de caja y cobros con pagos mixtos (RF-12) |
-| **Pruebas** | Go: 25 unitarias + 56 de integración ✅ · Frontend: 23 (Vitest) ✅ · Humo PowerShell ✅ · Navegador: 21 (Etapas 1–2) + 10 (Etapa 3) + 12 (Etapa 4) pasos ✅ |
-| **Cobertura backend** | Capa de endpoints 81,1 % ✅ (meta SRS 8.2: ≥ 80 %) · total del backend 80,3 % |
-| **Bloqueadores** | Ninguno para la Etapa 5 (se usará un proveedor de facturación SIMULADO). Preguntas abiertas al cliente: Q-01…Q-06 (`docs/01-analisis-requisitos.md` §1.4); Q-01 (país) y Q-04 (cierre ciego) afectan la Etapa 5 |
+| **Etapa actual** | Etapa 5 completada · siguiente: Etapa 6 (inventario y honorarios) |
+| **Última tarea completada** | Etapa 5: caja con pagos mixtos, comprobantes por adaptador (SIMULADO), anulación con nota de crédito, cierre ciego conciliado por el Auditor y cuentas por cobrar a aseguradoras (2026-10-30) |
+| **Siguiente tarea pendiente** | E6-01: insumos por ubicación y recetas de consumo por procedimiento (RF-14) |
+| **Pruebas** | Go: 30 unitarias + 58 de integración ✅ · Frontend: 27 (Vitest) ✅ · Humo PowerShell ✅ · Navegador: 21 (Etapas 1–2) + 10 (Etapa 3) + 12 (Etapa 4) + 7 (Etapa 5) pasos ✅ |
+| **Cobertura backend** | Capa de endpoints 81,0 % ✅ (meta SRS 8.2: ≥ 80 %) · total del backend 80,3 % |
+| **Bloqueadores** | Ninguno para la Etapa 6. Preguntas abiertas al cliente: Q-01…Q-06 (`docs/01-analisis-requisitos.md` §1.4); Q-01 (país) impide conectar la facturación real |
 
 ## Stack (igual a catalogo-multinivel)
 
@@ -65,7 +65,8 @@
   - [ ] ⏳ Proveedor real (WhatsApp Business / Twilio) — requiere credenciales del cliente
 
 ### Caja y facturación (Etapa 5)
-- [ ] **RF-12** Pagos mixtos y comprobante electrónico vía adaptador (simulado hasta definir país, Q-01)
+- [x] **RF-12** Pagos mixtos (efectivo, tarjeta, transferencia, seguro → cuenta por cobrar) que cuadran al centavo (API y BD); comprobante vía adaptador `facturacion.Proveedor` con proveedor **SIMULADO**; anulación con nota de crédito; reintento si la facturación falla
+  - [ ] ⏳ Proveedor de facturación real e impuestos — requiere el país y su autoridad tributaria (Q-01)
 
 ### Honorarios e inventario (Etapa 6)
 - [ ] **RF-13** Reglas de honorarios: % fijo, monto fijo, % neto de laboratorio/materiales
@@ -73,7 +74,7 @@
 
 ## Reglas de negocio (SRS §6)
 - [x] **RN-01** Procedimiento realizado no se borra ni se edita (trigger en la BD); correcciones por adenda firmada
-- [ ] **RN-02** Cierre de caja ciego (Etapa 5) — permiso `caja.revisar` sólo para el Auditor ✅
+- [x] **RN-02** Cierre de caja ciego: ninguna respuesta a `caja.operar` contiene el teórico (prueba que revisa el JSON completo); teórico guardado en la misma transacción del cierre; sólo el Auditor (`caja.revisar`) concilia, con tolerancia configurable y nota obligatoria si hay diferencias
 - [x] **RN-03** Sin dos citas simultáneas en el mismo sillón: `EXCLUDE USING gist` + 409 con la cita en conflicto; 20 peticiones simultáneas ⇒ 1 éxito
 
 ## Requerimientos no funcionales (SRS §5)
@@ -90,13 +91,14 @@
   - [x] Autenticación, administración, pacientes (lecturas y cambios), anamnesis, citas
   - [x] Odontograma, periodontograma, notas, adendas y procedimientos (lecturas y escrituras); firmas fallidas
   - [x] Presupuestos, autorizaciones de descuento, decisiones, consentimientos, recetas y archivos (lecturas y escrituras); archivo alterado
-  - [ ] Caja, inventario y honorarios (Etapas 5–6)
+  - [x] Caja: apertura, cobros, anulaciones, comprobantes, cierre y revisión
+  - [ ] Inventario y honorarios (Etapa 6)
 - [x] **RNF-07** Responsive: escritorio y celular verificados · [ ] tablet 10,5" y 1920×1080 automatizados (Etapa 7)
 - [ ] **RNF-08** Navegadores: hoy probado en Chromium; Firefox, WebKit/Safari y Edge en la Etapa 7
 
 ## Criterios técnicos (SRS §8.2)
 - [x] OpenAPI 3 generado del código (`go run . openapi`)
-- [x] Cobertura ≥ 80 % en la capa de endpoints — medida 81,1 % (total 80,3 %)
+- [x] Cobertura ≥ 80 % en la capa de endpoints — medida 81,0 % (total 80,3 %)
 - [ ] ⏳ DAST/SAST sin hallazgos Altos/Críticos (ZAP, gosec, govulncheck, npm audit) — Etapa 7
 
 ## Etapas
@@ -105,6 +107,6 @@
 - [x] **Etapa 2 — Pacientes y agenda**
 - [x] **Etapa 3 — Núcleo clínico** (RF-03, RF-04, RF-05, RN-01)
 - [x] **Etapa 4 — Planes y consentimientos** (RF-06, RF-07, RF-08, recetas, archivos)
-- [ ] **Etapa 5 — Caja y facturación** (RF-12, RN-02)
+- [x] **Etapa 5 — Caja y facturación** (RF-12, RN-02)
 - [ ] **Etapa 6 — Inventario y honorarios** (RF-13, RF-14)
 - [ ] **Etapa 7 — Calidad y salida** (RNF-01…04, RNF-08, 8.2, despliegue Render + Neon)

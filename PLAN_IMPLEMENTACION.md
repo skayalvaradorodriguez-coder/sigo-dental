@@ -79,14 +79,18 @@
 - [x] Archivos: interfaz `Almacen` (disco local; memoria en pruebas), tipo por contenido, SHA-256 verificado al descargar
 - [x] **Verificación:** aprobar 2 de 3 ítems crea exactamente 2 tareas; ni la API ni la BD modifican un presupuesto presentado ni un consentimiento firmado; archivo alterado ⇒ 409; recorrido de 12 pasos en el navegador
 
-## ETAPA 5 — Caja y facturación (rama `etapa-5-caja`)
+## ETAPA 5 — Caja y facturación ✅ (rama `etapa-5-caja`)
 
-> RF-12, RN-02. Requiere respuesta a Q-01 (país) y Q-04 (cierre ciego).
+> RF-12, RN-02. Q-01 (país) y Q-04 (cierre ciego) sin respuesta: proveedor de facturación SIMULADO
+> y supuestos S-31…S-34.
 
-- [ ] Sesión de caja, cobros con pagos mixtos (efectivo, tarjeta, transferencia, seguro → cuenta por cobrar)
-- [ ] Cierre ciego: el recepcionista declara sin ver el teórico; el Auditor ve la diferencia
-- [ ] Interfaz `ProveedorFacturacion` con proveedor SIMULADO rotulado (sin asumir autoridad tributaria)
-- [ ] **Verificación:** la respuesta al recepcionista nunca incluye el teórico; sumas al centavo
+- [x] Migración `005_caja.sql`: `caja_sesiones` (una abierta por cajero; teórico y declarado al cerrar), `cobros`, `cobro_conceptos`, `cobro_pagos`, `cobros_anulaciones`, `comprobantes` (cada intento) y secuencias
+- [x] Guardias en la BD: cobro/anulación sólo en caja abierta (`FOR SHARE`); conceptos = pagos = total al confirmar (trigger diferido); un realizado se cobra una vez; todo sólo inserción; sesión ABIERTA → CERRADA → REVISADA
+- [x] Cobro con pagos mixtos; montos fijados por el sistema (presupuesto aprobado o arancel); seguro → cuenta por cobrar
+- [x] Puerto `facturacion.Proveedor` + proveedor SIMULADO; factura, nota de crédito al anular, reintento si falla
+- [x] Cierre ciego: la recepción declara sin ver el teórico; el Auditor concilia por medio, con tolerancia configurable y nota obligatoria si hay diferencias
+- [x] Pantallas: caja de recepción (apertura, cobro con cambio, cobros, anulación, cierre), conciliación del Auditor, cuentas por cobrar, pestaña Pagos de la ficha, panel
+- [x] **Verificación:** ninguna respuesta al recepcionista incluye el teórico (se revisa el JSON completo); sumas al centavo; 10 cobros simultáneos del mismo procedimiento ⇒ 1 éxito; cobro después del cierre rechazado por la API y la BD
 
 ## ETAPA 6 — Inventario y honorarios (rama `etapa-6-inventario-honorarios`)
 

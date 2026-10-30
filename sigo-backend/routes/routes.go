@@ -200,6 +200,25 @@ func NuevaApp(h *controllers.Controllers) (*fiber.App, []Registro) {
 	e.permiso("POST", "/pacientes/:id/archivos", p(permisos.ClinicaEscribir), h.SubirArchivo)
 	e.permiso("GET", "/archivos/:id/contenido", p(permisos.ClinicaLeer), h.DescargarArchivo)
 
+	// ---------------------------------------------------------------- Etapa 5
+	// Caja (RF-12) con cierre ciego (RN-02): el recepcionista (caja.operar) nunca recibe el teórico;
+	// el Auditor (caja.revisar) concilia. Comprobantes por el proveedor de facturación (SIMULADO).
+	e.permiso("GET", "/caja/sesion", p(permisos.CajaOperar), h.MiCaja)
+	e.permiso("POST", "/caja/sesion", p(permisos.CajaOperar), h.AbrirCaja)
+	e.permiso("POST", "/caja/sesion/cerrar", p(permisos.CajaOperar), h.CerrarCaja)
+	e.permiso("GET", "/caja/cobros", p(permisos.CajaOperar), h.MisCobros)
+	e.permiso("GET", "/pacientes/:id/por-cobrar", p(permisos.CajaOperar), h.PorCobrar)
+	e.alguno("GET", "/pacientes/:id/cobros", p(permisos.CajaOperar, permisos.CajaRevisar), h.CobrosPaciente)
+	e.permiso("POST", "/cobros", p(permisos.CajaOperar, permisos.FacturacionEmitir), h.CrearCobro)
+	e.alguno("GET", "/cobros/:id", p(permisos.CajaOperar, permisos.CajaRevisar), h.ObtenerCobro)
+	e.permiso("POST", "/cobros/:id/anular", p(permisos.CajaOperar, permisos.FacturacionEmitir), h.AnularCobro)
+	e.permiso("POST", "/cobros/:id/comprobante", p(permisos.FacturacionEmitir), h.ReintentarComprobante)
+	e.alguno("GET", "/facturacion/proveedor", p(permisos.CajaOperar, permisos.CajaRevisar), h.EstadoFacturacion)
+	e.permiso("GET", "/caja/cierres", p(permisos.CajaRevisar), h.ListarCierres)
+	e.permiso("GET", "/caja/cierres/:id", p(permisos.CajaRevisar), h.ObtenerCierre)
+	e.permiso("POST", "/caja/cierres/:id/revisar", p(permisos.CajaRevisar), h.RevisarCierre)
+	e.permiso("GET", "/caja/cuentas-por-cobrar", p(permisos.CajaRevisar), h.CuentasPorCobrar)
+
 	// Cualquier otra ruta /api → 404 JSON.
 	app.Use("/api", func(c *fiber.Ctx) error {
 		return c.Status(404).JSON(models.NewAPIError(404, "NO_ENCONTRADO", "Recurso no encontrado."))
