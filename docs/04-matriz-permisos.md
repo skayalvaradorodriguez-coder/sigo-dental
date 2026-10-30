@@ -41,4 +41,6 @@ Decisiones de menor privilegio (ver 01-analisis, supuestos):
 - El **Auditor/Contador** revisa caja, inventario y honorarios; no accede a la bitácora de seguridad (S-11, pregunta Q-05).
 - `honorarios.propios` vs `honorarios.todos`: el odontólogo sólo ve su liquidación.
 
+Uso en el expediente clínico (Etapa 3): leer odontograma, periodontograma, notas y procedimientos ⇒ `clinica.leer`; registrar hallazgos, periodontogramas y borradores de nota ⇒ `clinica.escribir`; firmar notas, agregar adendas y registrar procedimientos realizados ⇒ `clinica.firmar` (además del código MFA en el momento de firmar).
+
 Verificación: `pruebas/permisos_test.go` prueba la matriz rol × endpoint contra la API real (403 donde no corresponde) y `permisos/permisos_test.go` comprueba que cada permiso pertenece al catálogo.

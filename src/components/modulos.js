@@ -16,7 +16,7 @@ import {
   Users,
 } from "lucide-react";
 
-export const ETAPA_ACTUAL = 2;
+export const ETAPA_ACTUAL = 3;
 
 export const MODULOS = [
   { ruta: "/", etiqueta: "Panel", icono: LayoutDashboard, permisos: [], grupo: "principal", etapa: 1 },

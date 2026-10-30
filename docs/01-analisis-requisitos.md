@@ -124,6 +124,11 @@ Otros supuestos:
 - **S-17** (Etapa 2) Se admite registrar una cita que empezó hace hasta 15 min (paciente que llega sin turno); más atrás no.
 - **S-18** (Etapa 2) Duración de cita: múltiplo de 5 min, entre 10 min y 8 h. "No asistió" sólo puede marcarse desde la hora de inicio; cancelar exige motivo; sólo se reprograman citas Programadas o Confirmadas.
 - **S-19** (Etapa 2) Las citas y los pacientes no se borran (trigger en BD): se cancelan o se corrigen, para conservar trazabilidad.
+- **S-20** (Etapa 3) Firmar notas SOEP, adendas y procedimientos realizados exige **volver a ingresar el código MFA** en ese momento. Se guarda un hash SHA-256 del contenido con la identidad y el registro profesional del firmante; la interfaz verifica el hash y avisa si el contenido fue alterado.
+- **S-21** (Etapa 3) Una nota cuyo plazo venció sin firmar queda **"bloqueada sin firma"**: su texto ya no cambia, pero el odontólogo todavía puede firmarla (la firma no altera el contenido). Lo que falte se agrega como adenda.
+- **S-22** (Etapa 3) Para firmar, la nota debe tener los cuatro apartados S, O, E y P. Las adendas sólo se agregan a notas firmadas o bloqueadas (un borrador se corrige directamente) y requieren `clinica.firmar`.
+- **S-23** (Etapa 3) El periodontograma se registra en dientes permanentes; cada examen es completo y no se edita (se registra uno nuevo en la siguiente visita). Los dientes sin medir no se incluyen.
+- **S-24** (Etapa 3) El registro de un procedimiento realizado lo hace el odontólogo (`clinica.firmar`), firmado en el momento; el asistente puede registrar hallazgos en el odontograma y borradores de notas.
 - **P-05** (propuesta) Impedir también que un mismo odontólogo tenga dos citas simultáneas. El SRS sólo lo exige por sillón (RN-03), por eso **no** se implementó; puede activarse con una restricción análoga si la clínica lo pide.
 
 ## 1.4 Preguntas para el cliente

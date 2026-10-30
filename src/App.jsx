@@ -10,6 +10,7 @@ import Auditoria from "./pages/admin/Auditoria";
 import Catalogos from "./pages/admin/Catalogos";
 import Usuarios from "./pages/admin/Usuarios";
 import { CambiarPassword, ConfigurarMFA, Login, VerificarMFA } from "./pages/auth/PasosIngreso";
+import Expediente from "./pages/expediente/Expediente";
 import { ModuloPendiente, NoEncontrada } from "./pages/ModuloPendiente";
 import FichaPaciente from "./pages/pacientes/FichaPaciente";
 import FormularioPaciente from "./pages/pacientes/FormularioPaciente";
@@ -23,6 +24,7 @@ const PANTALLAS = {
   "/catalogos": Catalogos,
   "/pacientes": Pacientes,
   "/agenda": Agenda,
+  "/expediente": Expediente,
 };
 
 // Mientras falte un paso del inicio de sesión (siguientePaso), no se muestra ninguna otra pantalla.

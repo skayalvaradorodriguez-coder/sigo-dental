@@ -72,7 +72,7 @@ func TestMain(m *testing.M) {
 	}
 	simulada = &notificaciones.Simulada{}
 	desp := &notificaciones.Despachador{Proveedor: simulada, Clinica: cfg.NombreClinica, Zona: cfg.ZonaHoraria}
-	ctl = controllers.NewControllers(repository.NuevoPostgres(pool), cache.NuevaRedisCache(config.ConectarRedis(cfg.RedisAddr, cfg.RedisPass)), cfg, desp)
+	ctl = controllers.NewControllers(repository.NuevoPostgres(pool), cache.NuevaRedisCache(config.ConectarRedis(cfg.RedisAddr, cfg.RedisPass, cfg.RedisDB)), cfg, desp)
 	app, registro = routes.NuevaApp(ctl)
 	code := m.Run()
 	pool.Close()

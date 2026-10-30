@@ -1343,6 +1343,216 @@
         "x-politica": "sesion"
       }
     },
+    "/api/notas/{id}": {
+      "put": {
+        "description": "Acceso: sesión completa + permiso clinica.escribir.\n\nCuerpo JSON: `{subjetivo, objetivo, evaluacion, plan}` (campos desconocidos ⇒ 400).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Edita el borrador: sólo el autor, sin firma y antes del bloqueo (409 NOTA_FIRMADA / NOTA_BLOQUEADA). La BD también lo impide.",
+        "tags": [
+          "notas"
+        ],
+        "x-politica": "permisos:clinica.escribir"
+      }
+    },
+    "/api/notas/{id}/adendas": {
+      "post": {
+        "description": "Acceso: sesión completa + permiso clinica.firmar.\n\nCuerpo JSON: `{texto, codigo}` (campos desconocidos ⇒ 400).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Adenda firmada a una nota firmada o bloqueada (la nota original no cambia).",
+        "tags": [
+          "notas"
+        ],
+        "x-politica": "permisos:clinica.firmar"
+      }
+    },
+    "/api/notas/{id}/firmar": {
+      "post": {
+        "description": "Acceso: sesión completa + permiso clinica.firmar.\n\nCuerpo JSON: `{codigo}` (campos desconocidos ⇒ 400).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Firma electrónica simple: re-autenticación con código MFA + hash SHA-256 del contenido. No es firma digital con certificado.",
+        "tags": [
+          "notas"
+        ],
+        "x-politica": "permisos:clinica.firmar"
+      }
+    },
     "/api/notificaciones": {
       "get": {
         "description": "Acceso: sesión completa + permiso citas.leer.",
@@ -1807,6 +2017,518 @@
         "x-politica": "permisos:anamnesis.escribir"
       }
     },
+    "/api/pacientes/{id}/notas": {
+      "get": {
+        "description": "Acceso: sesión completa + permiso clinica.leer.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Notas SOEP (RF-05) con estado (BORRADOR, FIRMADA, BLOQUEADA_SIN_FIRMA), integridad del hash y adendas.",
+        "tags": [
+          "pacientes"
+        ],
+        "x-politica": "permisos:clinica.leer"
+      },
+      "post": {
+        "description": "Acceso: sesión completa + permiso clinica.escribir.\n\nCuerpo JSON: `{citaId?, subjetivo, objetivo, evaluacion, plan}` (campos desconocidos ⇒ 400).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Nueva nota; bloqueo_en = ahora + clinica.horasBloqueoNotas (24 h por defecto).",
+        "tags": [
+          "pacientes"
+        ],
+        "x-politica": "permisos:clinica.escribir"
+      }
+    },
+    "/api/pacientes/{id}/odontograma": {
+      "get": {
+        "description": "Acceso: sesión completa + permiso clinica.leer.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Odontograma (RF-03): catálogo de hallazgos, estado vigente e historial completo (lectura auditada). Dientes en FDI.",
+        "tags": [
+          "pacientes"
+        ],
+        "x-politica": "permisos:clinica.leer"
+      },
+      "post": {
+        "description": "Acceso: sesión completa + permiso clinica.escribir.\n\nCuerpo JSON: `{diente (FDI), superficie? (M|D|O|I|V|L|P), hallazgo, accion (AGREGAR|QUITAR), nota?}` (campos desconocidos ⇒ 400).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Agrega o quita un hallazgo (evento; nunca se borra). Anamnesis pendiente ⇒ 409 ANAMNESIS_PENDIENTE.",
+        "tags": [
+          "pacientes"
+        ],
+        "x-politica": "permisos:clinica.escribir"
+      }
+    },
+    "/api/pacientes/{id}/periodontogramas": {
+      "get": {
+        "description": "Acceso: sesión completa + permiso clinica.leer.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Periodontogramas (RF-04) con NIC calculado por la BD y resumen (sangrado, bolsas ≥ 4 mm, NIC máximo).",
+        "tags": [
+          "pacientes"
+        ],
+        "x-politica": "permisos:clinica.leer"
+      },
+      "post": {
+        "description": "Acceso: sesión completa + permiso clinica.escribir.\n\nCuerpo JSON: `{observaciones?, dientes[{diente, ausente, movilidad?, furca?, sitios[{sitio, profundidad, margen, sangrado, supuracion}]}]}` (campos desconocidos ⇒ 400).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Examen completo: 6 sitios por diente presente; no se edita después.",
+        "tags": [
+          "pacientes"
+        ],
+        "x-politica": "permisos:clinica.escribir"
+      }
+    },
+    "/api/pacientes/{id}/procedimientos": {
+      "get": {
+        "description": "Acceso: sesión completa + permiso clinica.leer.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Procedimientos realizados con sus adendas.",
+        "tags": [
+          "pacientes"
+        ],
+        "x-politica": "permisos:clinica.leer"
+      },
+      "post": {
+        "description": "Acceso: sesión completa + permiso clinica.firmar.\n\nCuerpo JSON: `{procedimientoId, citaId?, diente?, superficies?[], observaciones?, codigo}` (campos desconocidos ⇒ 400).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Registra un procedimiento realizado, firmado e inmutable (RN-01: sin edición ni borrado, también en la BD).",
+        "tags": [
+          "pacientes"
+        ],
+        "x-politica": "permisos:clinica.firmar"
+      }
+    },
     "/api/panel": {
       "get": {
         "description": "Acceso: sesión completa (MFA verificado).",
@@ -1915,6 +2637,76 @@
           "password"
         ],
         "x-politica": "sesion"
+      }
+    },
+    "/api/procedimientos-realizados/{id}/adendas": {
+      "post": {
+        "description": "Acceso: sesión completa + permiso clinica.firmar.\n\nCuerpo JSON: `{texto, codigo}` (campos desconocidos ⇒ 400).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Éxito"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "VALIDACION u otro error de entrada"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "NO_AUTENTICADO / SESION_EXPIRADA"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "PROHIBIDO / MFA_REQUERIDO / CAMBIO_PASSWORD_REQUERIDO"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Corrección de un procedimiento realizado mediante adenda firmada (RN-01).",
+        "tags": [
+          "procedimientos-realizados"
+        ],
+        "x-politica": "permisos:clinica.firmar"
       }
     },
     "/api/usuarios": {

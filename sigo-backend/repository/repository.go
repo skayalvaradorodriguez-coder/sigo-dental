@@ -155,6 +155,22 @@ type DBRepository interface {
 	NotificacionesDeCita(ctx context.Context, citaID string) ([]models.Notificacion, error)
 	BandejaNotificaciones(ctx context.Context, page, limit int) ([]models.Notificacion, error)
 	ProcesarVencidas(ctx context.Context, limite int, ahora time.Time, enviar func(EnvioPendiente) ResultadoEnvio) (int, int, error)
+	// Etapa 3 — expediente clínico
+	EventosOdontograma(ctx context.Context, pacienteID string) ([]models.EventoOdontograma, error)
+	AgregarEventoOdontograma(ctx context.Context, pacienteID string, diente int, superficie *string, hallazgo, accion string, nota *string, usuarioID string) (int64, error)
+	CrearPeriodontograma(ctx context.Context, pacienteID string, obs *string, dientes []models.PerioDiente, usuarioID string) (string, error)
+	Periodontogramas(ctx context.Context, pacienteID string) ([]models.Periodontograma, error)
+	NotasPaciente(ctx context.Context, pacienteID string) ([]models.NotaSOEP, error)
+	NotaPorID(ctx context.Context, id string) (*models.NotaSOEP, error)
+	CrearNota(ctx context.Context, pacienteID string, citaID *string, autorID string, c ContenidoSOEP, horasBloqueo int) (string, error)
+	ActualizarNota(ctx context.Context, id string, c ContenidoSOEP) error
+	FirmarNota(ctx context.Context, id, firmanteID string, firmadaEn time.Time, hash string) error
+	AgregarAdendaNota(ctx context.Context, notaID, autorID, texto string, creadoEn time.Time, hash string) error
+	RegistrarRealizado(ctx context.Context, n NuevoRealizado) (string, error)
+	RealizadosPaciente(ctx context.Context, pacienteID string) ([]models.ProcedimientoRealizado, error)
+	PacienteDeRealizado(ctx context.Context, id string) (string, error)
+	AgregarAdendaRealizado(ctx context.Context, realizadoID, autorID, texto string, creadoEn time.Time, hash string) error
+	CitaDelPaciente(ctx context.Context, citaID, pacienteID string) (bool, error)
 }
 
 var _ DBRepository = (*Postgres)(nil)

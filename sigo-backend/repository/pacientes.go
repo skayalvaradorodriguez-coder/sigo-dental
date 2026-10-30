@@ -14,7 +14,7 @@ import (
 )
 
 const colsAnamnesis = `id, version, enfermedades_sistemicas, alergias, antecedentes_quirurgicos, coagulopatia, anticoagulado,
-	medicacion_actual, embarazo, otra_condicion_critica, observaciones, registrado_por::text, registrado_en`
+	medicacion_actual, embarazo, otra_condicion_critica, observaciones, (SELECT u.nombre FROM usuarios u WHERE u.id = anamnesis.registrado_por), registrado_en`
 
 func scanAnamnesis(row pgx.Row, pacienteID *string) (*models.Anamnesis, error) {
 	a := &models.Anamnesis{}

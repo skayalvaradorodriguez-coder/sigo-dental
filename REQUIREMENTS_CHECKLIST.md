@@ -11,12 +11,12 @@
 
 | Campo | Valor |
 |---|---|
-| **Etapa actual** | Etapa 2 completada · siguiente: Etapa 3 (núcleo clínico) |
-| **Última tarea completada** | Etapa 2: pacientes, anamnesis, alertas, catálogos, agenda, estados, recordatorios simulados, RN-03; frontend JavaScript; OpenAPI generado; documentación (2026-10-30) |
-| **Siguiente tarea pendiente** | E3-01: odontograma FDI/Universal por superficies (RF-03) |
-| **Pruebas** | Go: 17 unitarias + 38 de integración ✅ · Frontend: 11 (Vitest) ✅ · Humo PowerShell ✅ · Navegador (5 roles) ✅ |
-| **Cobertura backend** | 76,3 % de sentencias (medida). Meta del SRS 8.2: ≥ 80 % → pendiente |
-| **Bloqueadores** | Ninguno para la Etapa 3. Preguntas abiertas al cliente: Q-01…Q-06 (`docs/01-analisis-requisitos.md` §1.4) |
+| **Etapa actual** | Etapa 3 completada · siguiente: Etapa 4 (planes y consentimientos) |
+| **Última tarea completada** | Etapa 3: odontograma FDI/Universal, periodontograma con NIC, notas SOEP con bloqueo y firma, adendas, procedimientos realizados inmutables (2026-10-30) |
+| **Siguiente tarea pendiente** | E4-01: presupuestos por fases y sesiones (RF-07) |
+| **Pruebas** | Go: 22 unitarias + 49 de integración ✅ · Frontend: 17 (Vitest) ✅ · Humo PowerShell ✅ · Navegador: 21 pasos (Etapas 1–2) + 10 (Etapa 3) ✅ |
+| **Cobertura backend** | Capa de endpoints 81,0 % ✅ (meta SRS 8.2: ≥ 80 %) · total del backend 79,9 % |
+| **Bloqueadores** | Ninguno para la Etapa 4. Preguntas abiertas al cliente: Q-01…Q-06 (`docs/01-analisis-requisitos.md` §1.4); Q-06 (tope de descuentos) se necesita en la Etapa 4 |
 
 ## Stack (igual a catalogo-multinivel)
 
@@ -43,12 +43,13 @@
   - [x] Versionada; versiones anteriores inmutables (trigger)
   - [x] *Badge* rojo de alerta crítica en la cabecera, la lista, la agenda y el detalle de la cita
   - [x] Recepción ve las alertas pero no el detalle clínico
-  - [ ] Bloquear registros clínicos si la anamnesis está pendiente (Etapa 3)
+  - [x] Bloquear registros clínicos si la anamnesis está pendiente (409 `ANAMNESIS_PENDIENTE`)
 
-### Clínico (Etapa 3–4)
-- [ ] **RF-03** Odontograma 2D: 32 permanentes y 20 temporales, FDI y Universal, superficies M/D/O-I/V/L-P, catálogo visual
-- [ ] **RF-04** Periodontograma: sondaje en 6 puntos, margen gingival, NIC, furca, movilidad, sangrado
-- [ ] **RF-05** Notas SOEP: bitácora cronológica, bloqueo tras el plazo configurable (parámetro ✅ ya existe: 24 h), firma del profesional (firma electrónica simple)
+### Clínico
+- [x] **RF-03** Odontograma 2D interactivo (SVG): 32 permanentes y 20 temporales, FDI y Universal, superficies M/D/O-I/V/L-P, catálogo visual (caries rojo, restauración azul, endodoncia requerida/realizada, implante, prótesis fija/removible, exodoncia, sellante, ausente)
+  - [x] Cada cambio es un evento: el historial no se pierde (sólo inserción en la BD)
+- [x] **RF-04** Periodontograma: sondaje en 6 puntos, margen gingival, NIC calculado por la BD, furca, movilidad, sangrado, resumen
+- [x] **RF-05** Notas SOEP: bitácora cronológica, bloqueo tras el plazo configurable (24 h) en API y BD, firma del profesional (firma electrónica simple con MFA + hash), adendas
 - [ ] **RF-06** Consentimiento informado por procedimiento: firma manuscrita digitalizada u OTP (proveedor simulado)
 
 ### Presupuestos (Etapa 4)
@@ -69,7 +70,7 @@
 - [ ] **RF-14** Descargo automático de insumos según receta de consumo
 
 ## Reglas de negocio (SRS §6)
-- [ ] **RN-01** Procedimiento realizado no se borra; correcciones por adenda (Etapa 3)
+- [x] **RN-01** Procedimiento realizado no se borra ni se edita (trigger en la BD); correcciones por adenda firmada
 - [ ] **RN-02** Cierre de caja ciego (Etapa 5) — permiso `caja.revisar` sólo para el Auditor ✅
 - [x] **RN-03** Sin dos citas simultáneas en el mismo sillón: `EXCLUDE USING gist` + 409 con la cita en conflicto; 20 peticiones simultáneas ⇒ 1 éxito
 
@@ -85,20 +86,21 @@
   - [x] Bloqueo tras 5 intentos (configurable), límite de 10 logins/min, sin enumeración de usuarios
 - [x] **RNF-06** Auditoría inmutable: quién, qué, cuándo (ISO-8601), IP; cadena de hashes verificable
   - [x] Autenticación, administración, pacientes (lecturas y cambios), anamnesis, citas
-  - [ ] Notas, odontograma y demás entidades clínicas (Etapa 3+)
+  - [x] Odontograma, periodontograma, notas, adendas y procedimientos (lecturas y escrituras); firmas fallidas
+  - [ ] Presupuestos, consentimientos, caja, inventario y honorarios (Etapas 4–6)
 - [x] **RNF-07** Responsive: escritorio y celular verificados · [ ] tablet 10,5" y 1920×1080 automatizados (Etapa 7)
 - [ ] **RNF-08** Navegadores: hoy probado en Chromium; Firefox, WebKit/Safari y Edge en la Etapa 7
 
 ## Criterios técnicos (SRS §8.2)
 - [x] OpenAPI 3 generado del código (`go run . openapi`)
-- [ ] ⏳ Cobertura ≥ 80 % — medida 76,3 %
+- [x] Cobertura ≥ 80 % en la capa de endpoints — medida 81,0 % (total 79,9 %)
 - [ ] ⏳ DAST/SAST sin hallazgos Altos/Críticos (ZAP, gosec, govulncheck, npm audit) — Etapa 7
 
 ## Etapas
 
 - [x] **Etapa 1 — Base** (configuración, BD, autenticación, roles, navegación)
 - [x] **Etapa 2 — Pacientes y agenda**
-- [ ] **Etapa 3 — Núcleo clínico** (RF-03, RF-04, RF-05, RN-01)
+- [x] **Etapa 3 — Núcleo clínico** (RF-03, RF-04, RF-05, RN-01)
 - [ ] **Etapa 4 — Planes y consentimientos** (RF-06, RF-07, RF-08)
 - [ ] **Etapa 5 — Caja y facturación** (RF-12, RN-02)
 - [ ] **Etapa 6 — Inventario y honorarios** (RF-13, RF-14)

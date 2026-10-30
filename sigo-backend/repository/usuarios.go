@@ -189,12 +189,6 @@ func (r *Postgres) SesionesAbiertas(ctx context.Context, usuarioID string) (int,
 	return n, err
 }
 
-// Solo pruebas/demo: retrocede la última actividad para simular inactividad.
-func (r *Postgres) RetrocederActividad(ctx context.Context, usuarioID string, d time.Duration) error {
-	_, err := r.pool.Exec(ctx, `UPDATE sesiones SET ultima_actividad = now() - $2::interval WHERE usuario_id=$1`, usuarioID, d.String())
-	return err
-}
-
 // UsuariosPorRol: resumen para el panel del administrador.
 type UsuariosPorRol struct {
 	Rol        string `json:"rol"`

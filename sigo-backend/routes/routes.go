@@ -157,6 +157,21 @@ func NuevaApp(h *controllers.Controllers) (*fiber.App, []Registro) {
 	e.permiso("GET", "/notificaciones", p(permisos.CitasLeer), h.Bandeja)
 	e.permiso("POST", "/notificaciones/procesar", p(permisos.CitasEscribir), h.Procesar)
 
+	// ---------------------------------------------------------------- Etapa 3
+	// Expediente clínico: lectura con clinica.leer; registro con clinica.escribir; firmar con clinica.firmar.
+	e.permiso("GET", "/pacientes/:id/odontograma", p(permisos.ClinicaLeer), h.ObtenerOdontograma)
+	e.permiso("POST", "/pacientes/:id/odontograma", p(permisos.ClinicaEscribir), h.MarcarOdontograma)
+	e.permiso("GET", "/pacientes/:id/periodontogramas", p(permisos.ClinicaLeer), h.ListarPeriodontogramas)
+	e.permiso("POST", "/pacientes/:id/periodontogramas", p(permisos.ClinicaEscribir), h.CrearPeriodontograma)
+	e.permiso("GET", "/pacientes/:id/notas", p(permisos.ClinicaLeer), h.ListarNotas)
+	e.permiso("POST", "/pacientes/:id/notas", p(permisos.ClinicaEscribir), h.CrearNota)
+	e.permiso("PUT", "/notas/:id", p(permisos.ClinicaEscribir), h.ActualizarNota)
+	e.permiso("POST", "/notas/:id/firmar", p(permisos.ClinicaFirmar), h.FirmarNota)
+	e.permiso("POST", "/notas/:id/adendas", p(permisos.ClinicaFirmar), h.AdendaNota)
+	e.permiso("GET", "/pacientes/:id/procedimientos", p(permisos.ClinicaLeer), h.ListarRealizados)
+	e.permiso("POST", "/pacientes/:id/procedimientos", p(permisos.ClinicaFirmar), h.RegistrarRealizado)
+	e.permiso("POST", "/procedimientos-realizados/:id/adendas", p(permisos.ClinicaFirmar), h.AdendaRealizado)
+
 	// Cualquier otra ruta /api → 404 JSON.
 	app.Use("/api", func(c *fiber.Ctx) error {
 		return c.Status(404).JSON(models.NewAPIError(404, "NO_ENCONTRADO", "Recurso no encontrado."))

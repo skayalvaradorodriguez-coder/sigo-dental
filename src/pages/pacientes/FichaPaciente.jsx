@@ -1,7 +1,7 @@
 // Ficha del paciente: cabecera con alertas de alta visibilidad (RF-02), datos, anamnesis y citas.
 import { ArrowLeft, CalendarPlus, Pencil } from "lucide-react";
-import { useCallback, useState } from "react";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { useCallback } from "react";
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { AlertasMedicas } from "../../components/AlertasMedicas";
 import { Alert, Badge, Button, Card, EmptyState, SectionTitle, Spinner, Tabs } from "../../components/ui";
 import { useAuth } from "../../context/useAuth";
@@ -10,6 +10,10 @@ import { getCitas } from "../../services/citasService";
 import { getPaciente } from "../../services/pacientesService";
 import { ETIQUETA_CANAL, ETIQUETA_DOCUMENTO, ETIQUETA_ESTADO, ETIQUETA_SEXO, TONO_ESTADO } from "../../utils/etiquetas";
 import { fmtFechaHora, sumarDias } from "../../utils/fechas";
+import NotasSOEP from "../expediente/NotasSOEP";
+import Odontograma from "../expediente/Odontograma";
+import Periodontograma from "../expediente/Periodontograma";
+import Procedimientos from "../expediente/Procedimientos";
 import PanelAnamnesis from "./PanelAnamnesis";
 
 const Campo = ({ etiqueta, valor }) => (
@@ -62,7 +66,10 @@ const FichaPaciente = () => {
   const { puede } = useAuth();
   const navegar = useNavigate();
   const ubicacion = useLocation();
-  const [pestana, setPestana] = useState("datos");
+  // La pestaña va en la URL (?pestana=odontograma) para poder enlazarla desde "Expediente clínico".
+  const [params, setParams] = useSearchParams();
+  const pestana = params.get("pestana") ?? "datos";
+  const setPestana = (v) => setParams(v === "datos" ? {} : { pestana: v }, { replace: true });
   const { data: p, isLoading, error, recargar } = useApi(useCallback(() => getPaciente(id), [id]));
 
   if (isLoading && !p) return <Spinner label="Cargando ficha…" />;
@@ -76,6 +83,14 @@ const FichaPaciente = () => {
   const pestanas = [
     { id: "datos", label: "Datos personales" },
     ...(puede("clinica.leer", "anamnesis.escribir") ? [{ id: "anamnesis", label: "Anamnesis" }] : []),
+    ...(puede("clinica.leer")
+      ? [
+          { id: "odontograma", label: "Odontograma" },
+          { id: "periodontograma", label: "Periodontograma" },
+          { id: "evolucion", label: "Evolución (SOEP)" },
+          { id: "procedimientos", label: "Procedimientos" },
+        ]
+      : []),
     ...(puede("citas.leer") ? [{ id: "citas", label: "Citas" }] : []),
   ];
 
@@ -172,6 +187,10 @@ const FichaPaciente = () => {
       )}
       {pestana === "anamnesis" && <PanelAnamnesis paciente={p} alGuardar={recargar} />}
       {pestana === "citas" && <CitasDelPaciente pacienteId={p.id} />}
+      {puede("clinica.leer") && pestana === "odontograma" && <Odontograma paciente={p} />}
+      {puede("clinica.leer") && pestana === "periodontograma" && <Periodontograma paciente={p} />}
+      {puede("clinica.leer") && pestana === "evolucion" && <NotasSOEP paciente={p} />}
+      {puede("clinica.leer") && pestana === "procedimientos" && <Procedimientos paciente={p} />}
     </div>
   );
 };

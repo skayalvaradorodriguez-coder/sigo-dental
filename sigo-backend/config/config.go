@@ -20,6 +20,7 @@ type Config struct {
 	SesionMaxima        time.Duration // duración absoluta máxima de una sesión
 	RedisAddr           string
 	RedisPass           string
+	RedisDB             int
 	WebOrigin           string
 	MFAEmisor           string
 	ZonaHoraria         *time.Location
@@ -89,6 +90,9 @@ func Cargar(archivos ...string) (Config, error) {
 		errs = append(errs, "NOTIFICATIONS_DISPATCH_SECONDS debe ser un entero >= 0")
 	}
 	c.DespachoCada = time.Duration(seg) * time.Second
+	if c.RedisDB, err = strconv.Atoi(env("REDIS_DB", "0")); err != nil || c.RedisDB < 0 || c.RedisDB > 15 {
+		errs = append(errs, "REDIS_DB debe ser un entero entre 0 y 15")
+	}
 	if c.ProveedorMensajeria != "simulated" {
 		errs = append(errs, `MESSAGING_PROVIDER: sólo "simulated" está implementado`)
 	}

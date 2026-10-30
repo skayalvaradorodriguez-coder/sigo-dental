@@ -14,6 +14,7 @@ func TestMatrizDePermisos(t *testing.T) {
 	requiereBD(t)
 	desde := url.QueryEscape(time.Now().Format(time.RFC3339))
 	hasta := url.QueryEscape(time.Now().Add(24 * time.Hour).Format(time.RFC3339))
+	ana := idAna(t)
 	endpoints := []struct {
 		metodo, ruta string
 		requiere     []string // basta con uno
@@ -27,6 +28,9 @@ func TestMatrizDePermisos(t *testing.T) {
 		{"GET", "/api/citas?desde=" + desde + "&hasta=" + hasta, []string{permisos.CitasLeer}},
 		{"GET", "/api/notificaciones", []string{permisos.CitasLeer}},
 		{"GET", "/api/catalogos/estructura", []string{permisos.CatalogosGestionar, permisos.CitasLeer, permisos.PacientesLeer}},
+		{"GET", "/api/pacientes/" + ana + "/odontograma", []string{permisos.ClinicaLeer}},
+		{"GET", "/api/pacientes/" + ana + "/notas", []string{permisos.ClinicaLeer}},
+		{"GET", "/api/pacientes/" + ana + "/procedimientos", []string{permisos.ClinicaLeer}},
 	}
 	usuarios := map[string]string{permisos.AdminTI: admin, permisos.Recepcionista: recepcion, permisos.Odontologo: odontologo,
 		permisos.Asistente: asistente, permisos.Auditor: auditor}
