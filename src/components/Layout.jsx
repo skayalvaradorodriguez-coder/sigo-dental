@@ -1,9 +1,24 @@
 import { LogOut, Menu, ShieldCheck, X } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import { useInactividad } from "../hooks/useInactividad";
 import BannerSinConexion from "./BannerSinConexion";
+import * as authApi from "../services/authService";
+
+// Aviso permanente en el despliegue de demostración (APP_ENV=demo).
+const AvisoDemo = () => {
+  const [demo, setDemo] = useState(false);
+  useEffect(() => {
+    authApi.estado().then((r) => setDemo(Boolean(r?.demo)), () => {});
+  }, []);
+  if (!demo) return null;
+  return (
+    <div className="bg-amber-100 px-4 py-1.5 text-center text-xs font-medium text-amber-900">
+      DEMOSTRACIÓN · todos los pacientes y datos son ficticios · facturación y mensajería simuladas
+    </div>
+  );
+};
 import InstalarApp from "./InstalarApp";
 import { ETAPA_ACTUAL, MODULOS } from "./modulos";
 import { Button, Modal } from "./ui";
@@ -112,6 +127,7 @@ const Layout = () => {
       )}
       <div className="flex min-w-0 flex-col">
         <BannerSinConexion />
+        <AvisoDemo />
         <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-line bg-white/95 px-4 backdrop-blur sm:px-6">
           <button
             onClick={() => setAbierto(true)}

@@ -138,6 +138,9 @@ func NuevaApp(h *controllers.Controllers) (*fiber.App, []Registro) {
 	e.sesion("POST", "/password", h.CambiarPassword)
 	e.sesion("POST", "/logout", h.Logout)
 	e.sesion("GET", "/me", h.Me)
+	if h.Cfg.EsDemo() { // sólo en el despliegue de demostración (datos ficticios)
+		e.sesion("GET", "/demo/mfa", h.CodigoDemo)
+	}
 	e.completa("POST", "/heartbeat", h.Heartbeat)
 	e.completa("GET", "/panel", h.Panel)
 
