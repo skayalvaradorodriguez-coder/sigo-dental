@@ -226,3 +226,28 @@ func (r *Postgres) ReemplazarReceta(ctx context.Context, procedimientoID string,
 	}
 	return tx.Commit(ctx)
 }
+
+// CrearUbicacion: bodega o consultorio. Si es la de por defecto, la anterior deja de serlo.
+func (r *Postgres) CrearUbicacion(ctx context.Context, nombre string, consultorioID *string, porDefecto bool) (string, error) {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return "", err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	var n int
+	if err := tx.QueryRow(ctx, `SELECT count(*) FROM inventario_ubicaciones WHERE por_defecto`).Scan(&n); err != nil {
+		return "", err
+	}
+	porDefecto = porDefecto || n == 0 // la primera ubicación es la de por defecto
+	if porDefecto {
+		if _, err := tx.Exec(ctx, `UPDATE inventario_ubicaciones SET por_defecto=false WHERE por_defecto`); err != nil {
+			return "", err
+		}
+	}
+	var id string
+	if err := tx.QueryRow(ctx, `INSERT INTO inventario_ubicaciones (nombre, consultorio_id, por_defecto) VALUES ($1,$2,$3) RETURNING id`,
+		nombre, consultorioID, porDefecto).Scan(&id); err != nil {
+		return "", traducir(err)
+	}
+	return id, traducir(tx.Commit(ctx))
+}

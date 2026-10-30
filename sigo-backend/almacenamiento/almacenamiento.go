@@ -41,7 +41,7 @@ func (l *Local) Guardar(_ context.Context, clave string, datos []byte) error {
 	if _, err := os.Stat(r); err == nil {
 		return errors.New("el archivo ya existe: no se sobrescribe")
 	}
-	return os.WriteFile(r, datos, 0o640)
+	return os.WriteFile(r, datos, 0o600)
 }
 
 func (l *Local) Leer(_ context.Context, clave string) ([]byte, error) {
@@ -49,7 +49,7 @@ func (l *Local) Leer(_ context.Context, clave string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return os.ReadFile(r)
+	return os.ReadFile(r) // #nosec G304 -- la ruta sale de una clave validada (uuid/uuid) dentro de Dir
 }
 
 // Memoria: para pruebas.

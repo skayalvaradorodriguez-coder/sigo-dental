@@ -220,6 +220,7 @@ type DBRepository interface {
 
 	// Etapa 6 — inventario y honorarios
 	Ubicaciones(ctx context.Context) ([]models.Ubicacion, error)
+	CrearUbicacion(ctx context.Context, nombre string, consultorioID *string, porDefecto bool) (string, error)
 	Insumos(ctx context.Context, todos bool) ([]models.Insumo, error)
 	InsumoActivo(ctx context.Context, id string) (bool, error)
 	UbicacionActiva(ctx context.Context, id string) (bool, error)

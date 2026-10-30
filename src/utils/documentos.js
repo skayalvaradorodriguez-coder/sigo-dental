@@ -33,7 +33,7 @@ export const imprimirReceta = (r, paciente) =>
         .join("") +
       `</tbody></table>` +
       (r.indicaciones ? `<h2>Indicaciones</h2><p class="pre">${escapar(r.indicaciones)}</p>` : "") +
-      `<p style="margin-top:48px">______________________________<br>${escapar(r.odontologo)}${r.registroProfesional ? ` · Reg. ${escapar(r.registroProfesional)}` : ""}</p>` +
+      `<p class="firma-linea">______________________________<br>${escapar(r.odontologo)}${r.registroProfesional ? ` · Reg. ${escapar(r.registroProfesional)}` : ""}</p>` +
       `<p class="pie">Firma electrónica simple (código MFA) · huella SHA-256 ${escapar(r.hashFirma)}. Validez legal sujeta a la normativa de prescripción del país.</p>`,
   );
 
