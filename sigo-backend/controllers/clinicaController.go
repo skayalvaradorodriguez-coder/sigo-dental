@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -593,6 +594,7 @@ type realizadoIn struct {
 	Superficies     []string `json:"superficies"`
 	Observaciones   string   `json:"observaciones"`
 	Codigo          string   `json:"codigo"`
+	TareaID         string   `json:"tareaId"` // tarea del presupuesto aprobado que se realiza (RF-08)
 }
 
 // RegistrarRealizado — POST /api/pacientes/:id/procedimientos: queda firmado e inmutable (RN-01).
@@ -602,8 +604,9 @@ func (h *Controllers) RegistrarRealizado(c *fiber.Ctx) error {
 		return err
 	}
 	errs := validacion.Errores{}
-	errs.UUID("procedimientoId", in.ProcedimientoID, true)
+	errs.UUID("procedimientoId", in.ProcedimientoID, in.TareaID == "")
 	errs.UUID("citaId", in.CitaID, false)
+	errs.UUID("tareaId", in.TareaID, false)
 	errs.Longitud("observaciones", in.Observaciones, 0, 2000, "Observaciones: hasta 2000 caracteres.")
 	sups := []string{}
 	if in.Diente != nil && !domain.DienteValido(*in.Diente) {
@@ -630,6 +633,27 @@ func (h *Controllers) RegistrarRealizado(c *fiber.Ctx) error {
 		return nil
 	}
 	ctx := c.UserContext()
+	var tarea *string
+	if in.TareaID != "" {
+		t, msg, err := h.tareaDelPaciente(c, in.TareaID, p.ID, false)
+		if err != nil {
+			return h.errorInterno(c, err)
+		}
+		if msg == "" && in.ProcedimientoID != "" && in.ProcedimientoID != t.ProcedimientoID {
+			msg = "El procedimiento no coincide con el de la tarea."
+		}
+		if msg != "" {
+			return errValidacion(c, validacion.Errores{"tareaId": msg})
+		}
+		in.ProcedimientoID = t.ProcedimientoID
+		if in.Diente == nil {
+			in.Diente = t.Diente
+			if len(sups) == 0 {
+				sups = t.Superficies
+			}
+		}
+		tarea = &in.TareaID
+	}
 	if ok, err := h.Repo.ProcedimientoActivo(ctx, in.ProcedimientoID); err != nil {
 		return h.errorInterno(c, err)
 	} else if !ok {
@@ -660,7 +684,10 @@ func (h *Controllers) RegistrarRealizado(c *fiber.Ctx) error {
 		"odontologo": u.ID, "realizadoEn": iso(cuando)})
 	id, err := h.Repo.RegistrarRealizado(ctx, repository.NuevoRealizado{PacienteID: p.ID, ProcedimientoID: in.ProcedimientoID,
 		OdontologoID: u.ID, CitaID: cita, Observaciones: validacion.Opcional(in.Observaciones), Diente: in.Diente,
-		Superficies: sups, RealizadoEn: cuando, Hash: hash})
+		Superficies: sups, RealizadoEn: cuando, Hash: hash, TareaID: tarea})
+	if errors.Is(err, repository.ErrDuplicado) {
+		return responder(c, models.NewAPIError(409, "TAREA_YA_REALIZADA", "Esa tarea ya se registró como realizada."))
+	}
 	if err != nil {
 		return h.errorRepo(c, err, "", "")
 	}

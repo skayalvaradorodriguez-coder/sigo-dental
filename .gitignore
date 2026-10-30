@@ -19,6 +19,10 @@ sigo-backend/sigo-backend
 sigo-backend/sigo-backend.exe
 sigo-backend/*.exe
 sigo-backend/tmp/
+
+# Archivos de pacientes subidos en desarrollo (nunca al repositorio)
+sigo-backend/archivos/
+archivos/
 *.out
 cobertura.html
 

@@ -250,7 +250,7 @@ func (r *Postgres) AgregarAdendaNota(ctx context.Context, notaID, autorID, texto
 
 type NuevoRealizado struct {
 	PacienteID, ProcedimientoID, OdontologoID string
-	CitaID, Observaciones                     *string
+	CitaID, Observaciones, TareaID            *string
 	Diente                                    *int
 	Superficies                               []string
 	RealizadoEn                               time.Time
@@ -260,8 +260,8 @@ type NuevoRealizado struct {
 func (r *Postgres) RegistrarRealizado(ctx context.Context, n NuevoRealizado) (string, error) {
 	var id string
 	err := r.pool.QueryRow(ctx, `INSERT INTO procedimientos_realizados (paciente_id, procedimiento_id, cita_id, diente, superficies,
-		observaciones, odontologo_id, realizado_en, hash_firma) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
-		n.PacienteID, n.ProcedimientoID, n.CitaID, n.Diente, n.Superficies, n.Observaciones, n.OdontologoID, n.RealizadoEn, n.Hash).Scan(&id)
+		observaciones, odontologo_id, realizado_en, hash_firma, tarea_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
+		n.PacienteID, n.ProcedimientoID, n.CitaID, n.Diente, n.Superficies, n.Observaciones, n.OdontologoID, n.RealizadoEn, n.Hash, n.TareaID).Scan(&id)
 	return id, traducir(err)
 }
 

@@ -45,6 +45,7 @@ Config: `.env` opcional (ver `.env.example`): `VITE_API_URL` vacía = mismo orig
 | `services/pacientesService.js` | Búsqueda, ficha, alta, edición, anamnesis. |
 | `services/citasService.js` | Citas, reprogramar, estado, bandeja de mensajes. |
 | `services/expedienteService.js` | Odontograma, periodontogramas, notas SOEP (firma, adendas), procedimientos realizados. |
+| `services/planesService.js` | Presupuestos, tareas, consentimientos (vista previa, firma, OTP), plantillas, recetas, archivos (multipart y descarga como blob). |
 | `context/AuthContext.jsx` (+ `AuthContextValue.js`, `useAuth.jsx`) | Perfil, permisos, `puede(...)`, `ingresar`, `aplicarSesion` (tokens rotados por MFA), `salir`. |
 | `hooks/useApi.js` | Lectura `{data, isLoading, error, recargar}` (igual al del catálogo). |
 | `hooks/useAccion.js` | Escritura `{ejecutar, enviando, error}`. |
@@ -54,6 +55,8 @@ Config: `.env` opcional (ver `.env.example`): `VITE_API_URL` vacía = mismo orig
 | `utils/fechas.js` | Fechas locales, edad, semana desde el lunes, formatos `es`. |
 | `utils/etiquetas.js` | Etiquetas de roles, acciones de auditoría, estados de cita y transiciones (copia de `domain/citas.go`). |
 | `utils/cx.js` | Une clases CSS. |
+| `utils/dinero.js` | Montos en centavos enteros (igual que `domain/presupuestos.go`), formato sin moneda, totales por fase. |
+| `utils/imprimir.js`, `utils/documentos.js` | Impresión en un iframe con datos escapados: presupuesto, receta, consentimiento. |
 | `utils/dental.js` | Dientes por arcada, FDI → Universal, superficies (O/I, L/P), sitios del periodontograma, NIC (copia de `domain/dental.go`). |
 | `components/ui.jsx` | Botones, campos, modal, pestañas, alertas, estados vacíos. |
 | `components/AlertasMedicas.jsx` | Banner rojo de alerta crítica + indicador compacto (RF-02). |
@@ -69,7 +72,13 @@ Config: `.env` opcional (ver `.env.example`): `VITE_API_URL` vacía = mismo orig
 | `pages/expediente/Odontograma.jsx` | RF-03: SVG interactivo, dentición permanente/temporal, FDI/Universal, historial. |
 | `pages/expediente/Periodontograma.jsx` | RF-04: captura por arcada, NIC en vivo, exámenes anteriores con resumen. |
 | `pages/expediente/NotasSOEP.jsx`, `ModalFirma.jsx`, `Adendas.jsx` | RF-05: borradores, bloqueo, firma con código MFA, verificación del hash, adendas. |
-| `pages/expediente/Procedimientos.jsx` | RN-01: registro firmado e inmutable, adendas. |
+| `pages/expediente/Procedimientos.jsx` | RN-01: registro firmado e inmutable, adendas; puede partir de una tarea del presupuesto. |
+| `pages/expediente/Recetas.jsx` | P-01: medicamentos, alertas de alergia/anticoagulación con confirmación, firma MFA, impresión. |
+| `pages/expediente/Archivos.jsx` | Subida (JPG/PNG/PDF ≤ 10 MB) y visor con verificación SHA-256. |
+| `pages/presupuestos/Presupuestos.jsx` | Módulo: bandeja de presupuestos por estado. |
+| `pages/presupuestos/PresupuestosPaciente.jsx`, `EditorPresupuesto.jsx`, `DetallePresupuesto.jsx` | RF-07/RF-08: editor por fases, autorización de descuentos, presentación, decisión por ítem, tareas. |
+| `pages/consentimientos/Consentimientos.jsx` | Módulo: firmados, esperan código, plantillas versionadas. |
+| `pages/consentimientos/ConsentimientosPaciente.jsx`, `LienzoFirma.jsx` | RF-06: vista previa, firma en pantalla (Pointer Events → PNG) u OTP, detalle e impresión. |
 | `pages/ModuloPendiente.jsx` | Pantalla honesta de módulos de etapas futuras. |
 | `pruebas/` | Vitest + Testing Library. |
 
@@ -92,10 +101,13 @@ Config: `.env` (copiar de `.env.example`); pruebas: `.env.test` (base `sigo_dent
 | `controllers/catalogoController.go` | Catálogos con caché Redis e invalidación. |
 | `controllers/pacienteController.go` | Ficha, tutor, anamnesis (lecturas auditadas). |
 | `controllers/citaController.go` | Citas, estados, reprogramación, bandeja, despacho. |
+| `controllers/presupuestoController.go` | RF-07/RF-08: presupuestos, totales, descuentos con cuatro ojos, presentación con hash, decisión, tareas. |
+| `controllers/documentosController.go` | RF-06 consentimientos (vista previa, manuscrita, OTP), plantillas, recetas con alertas, archivos con SHA-256. |
 | `controllers/clinicaController.go` | Expediente: odontograma, periodontograma, notas SOEP (bloqueo, firma, adendas), procedimientos realizados; re-autenticación MFA y hashes. |
-| `repository/` | `DBRepository` (interfaz) + `Postgres`: usuarios/sesiones, auditoría encadenada, ajustes, catálogos, pacientes, citas, notificaciones, expediente clínico (`clinica.go`). |
+| `repository/` | `DBRepository` (interfaz) + `Postgres`: usuarios/sesiones, auditoría encadenada, ajustes, catálogos, pacientes, citas, notificaciones, expediente clínico (`clinica.go`), presupuestos y tareas (`presupuestos.go`), consentimientos, recetas y archivos (`documentos.go`). |
 | `cache/cache.go` | `CacheRepository` + `RedisCache` (nil-safe). |
-| `domain/` | Reglas puras: alertas, estados de cita, edad y día local, numeración dental, superficies, hallazgos, estado del odontograma, NIC. |
+| `domain/` | Reglas puras: alertas, estados de cita, edad y día local, numeración dental, superficies, hallazgos, estado del odontograma, NIC, dinero en centavos y totales, alertas de receta. |
+| `almacenamiento/` | Interfaz `Almacen`: `Local` (disco, `ARCHIVOS_DIR`, nunca sobrescribe) y `Memoria` (pruebas). |
 | `notificaciones/` | Planificador, mensajería (`Simulada`) y despachador. |
 | `seguridad/` | bcrypt, JWT, TOTP (RFC 6238), tokens. |
 | `permisos/` | Catálogo de permisos y matriz por rol. |
@@ -103,7 +115,7 @@ Config: `.env` (copiar de `.env.example`); pruebas: `.env.test` (base `sigo_dent
 | `models/` | `APIError`, `Pagina[T]`, entidades. |
 | `database/*.sql` + `migrar.go` | Migraciones embebidas e idempotentes; `initdb/` crea la base de pruebas. |
 | `semilla/semilla.go` | Datos ficticios de demostración. |
-| `pruebas/` | Integración contra la API y una base real (auth, permisos, pacientes, agenda, expediente clínico, complementos, OpenAPI). |
+| `pruebas/` | Integración contra la API y una base real (auth, permisos, pacientes, agenda, expediente clínico, planes y documentos, complementos, OpenAPI). |
 | `scripts/prueba-api.ps1` | Prueba de humo en PowerShell. |
 
 ## Rutas de la API (todas bajo `/api`)
@@ -121,4 +133,8 @@ Config: `.env` (copiar de `.env.example`); pruebas: `.env.test` (base `sigo_dent
 | Agenda | `GET/POST /citas`, `GET /citas/:id`, `PATCH /citas/:id/reprogramar`, `POST /citas/:id/estado`, `GET /notificaciones`, `POST /notificaciones/procesar` | `citas.leer` / `citas.escribir` |
 | Expediente | `GET/POST /pacientes/:id/odontograma`, `GET/POST /pacientes/:id/periodontogramas`, `GET/POST /pacientes/:id/notas`, `PUT /notas/:id`, `POST /notas/:id/firmar`, `POST /notas/:id/adendas`, `GET/POST /pacientes/:id/procedimientos`, `POST /procedimientos-realizados/:id/adendas` | leer: `clinica.leer` · registrar: `clinica.escribir` · firmar: `clinica.firmar` |
 
-Detalle de cada una (cuerpos y respuestas): `docs/openapi.json`.
+| Presupuestos | `GET /presupuestos`, `GET/PUT /presupuestos/:id`, `GET/POST /pacientes/:id/presupuestos`, `POST /presupuestos/:id/autorizar-descuentos` · `/presentar` · `/decision`, `GET /pacientes/:id/tareas` | `presupuestos.leer` / `.escribir` / `.aprobar`; autorizar: `presupuestos.escribir` + `clinica.firmar`; tareas: `citas.leer` o `presupuestos.leer` |
+| Consentimientos | `GET/POST /consentimientos/plantillas`, `GET /consentimientos`, `GET /consentimientos/:id`, `POST /consentimientos/:id/verificar-otp`, `GET/POST /pacientes/:id/consentimientos`, `POST /pacientes/:id/consentimientos/vista-previa` | `consentimientos.gestionar` (lista del paciente también `clinica.leer`; plantillas: `catalogos.gestionar`) |
+| Recetas y archivos | `GET/POST /pacientes/:id/recetas`, `GET/POST /pacientes/:id/archivos`, `GET /archivos/:id/contenido` | leer: `clinica.leer` · recetar: `recetas.escribir` · subir: `clinica.escribir` |
+
+Detalle de cada una (cuerpos y respuestas): `docs/openapi.json` (74 rutas).

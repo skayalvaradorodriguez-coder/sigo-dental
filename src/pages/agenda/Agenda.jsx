@@ -148,13 +148,14 @@ const Agenda = () => {
   const sillones = useApi(useCallback(() => getSillones(), []));
   const odontologos = useApi(useCallback(() => getOdontologos(), []));
 
-  // "Agendar" desde la ficha del paciente: /agenda?nuevo=<id>
+  // "Agendar" desde la ficha del paciente: /agenda?nuevo=<id>[&tarea=<id de tarea del presupuesto>]
   useEffect(() => {
     const pid = params.get("nuevo");
     if (pid && puedeEscribir) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- abre el diálogo una sola vez al llegar con ?nuevo
-      setNueva({ fecha: proximoCuarto(), pacienteId: pid });
+      setNueva({ fecha: proximoCuarto(), pacienteId: pid, tareaId: params.get("tarea") ?? "" });
       params.delete("nuevo");
+      params.delete("tarea");
       setParams(params, { replace: true });
     }
   }, [params, setParams, puedeEscribir]);

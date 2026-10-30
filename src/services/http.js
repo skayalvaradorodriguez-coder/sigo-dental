@@ -46,7 +46,9 @@ export class ApiError extends Error {
 
 export const mensajeDe = (e) => (e instanceof ApiError ? e.message : "Ocurrió un error inesperado.");
 
-export const apiFetch = async (ruta, { method = "GET", body, query } = {}) => {
+// body puede ser un objeto (se envía como JSON) o un FormData (multipart, para subir archivos).
+// respuesta: "json" (por defecto) o "blob" (descarga de archivos).
+export const apiFetch = async (ruta, { method = "GET", body, query, respuesta = "json" } = {}) => {
   const url = new URL(`${API_URL}/api${ruta}`, window.location.origin);
   Object.entries(query ?? {}).forEach(([clave, valor]) => {
     if (valor !== undefined && valor !== null && valor !== "") url.searchParams.set(clave, valor);
@@ -57,18 +59,24 @@ export const apiFetch = async (ruta, { method = "GET", body, query } = {}) => {
   }
 
   const headers = { Accept: "application/json" };
-  if (body !== undefined) headers["Content-Type"] = "application/json";
+  const esFormulario = typeof FormData !== "undefined" && body instanceof FormData;
+  if (body !== undefined && !esFormulario) headers["Content-Type"] = "application/json";
   const token = leerToken();
   if (token) headers.Authorization = `Bearer ${token}`;
 
   let response;
   try {
-    response = await fetch(url, { method, headers, body: body !== undefined ? JSON.stringify(body) : undefined });
+    response = await fetch(url, {
+      method,
+      headers,
+      body: body === undefined || esFormulario ? body : JSON.stringify(body),
+    });
   } catch {
     throw new ApiError(0, "RED", "No se pudo conectar con el servidor. Verifique que el backend esté en ejecución.");
   }
 
   if (response.status === 204) return null;
+  if (respuesta === "blob" && response.ok) return response.blob();
   const data = await response.json().catch(() => null);
   if (!response.ok) {
     const code = data?.code ?? (response.status === 403 ? "PROHIBIDO" : "ERROR");

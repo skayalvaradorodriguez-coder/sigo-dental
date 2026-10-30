@@ -8,6 +8,7 @@ import { useApi } from "../../hooks/useApi";
 import { useNotacion } from "../../hooks/useNotacion";
 import { getProcedimientos } from "../../services/catalogosService";
 import { adendaRealizado, getRealizados, registrarRealizado } from "../../services/expedienteService";
+import { getTareas } from "../../services/planesService";
 import {
   etiquetaSuperficie,
   nombreDiente,
@@ -23,9 +24,12 @@ import ModalFirma from "./ModalFirma";
 
 const TODOS = [...PERMANENTES_SUP, ...PERMANENTES_INF, ...TEMPORALES_SUP, ...TEMPORALES_INF];
 
-const Formulario = ({ notacion, alContinuar, alCancelar }) => {
+const Formulario = ({ pacienteId, notacion, alContinuar, alCancelar }) => {
   const procedimientos = useApi(useCallback(() => getProcedimientos(), []));
-  const [f, setF] = useState({ procedimientoId: "", diente: "", superficies: [], observaciones: "" });
+  // Tareas del presupuesto aprobado aún no realizadas (RF-08): al elegir una, se completan sus datos.
+  const tareas = useApi(useCallback(() => getTareas(pacienteId).catch(() => []), [pacienteId]));
+  const abiertas = (tareas.data ?? []).filter((t) => t.estado !== "REALIZADA");
+  const [f, setF] = useState({ tareaId: "", procedimientoId: "", diente: "", superficies: [], observaciones: "" });
   const [error, setError] = useState("");
   const d = Number(f.diente);
   return (
@@ -36,6 +40,7 @@ const Formulario = ({ notacion, alContinuar, alCancelar }) => {
         e.preventDefault();
         if (!f.procedimientoId) return setError("Seleccione el procedimiento.");
         alContinuar({
+          ...(f.tareaId ? { tareaId: f.tareaId } : {}),
           procedimientoId: f.procedimientoId,
           ...(f.diente ? { diente: d, superficies: f.superficies } : {}),
           observaciones: f.observaciones.trim(),
@@ -43,9 +48,38 @@ const Formulario = ({ notacion, alContinuar, alCancelar }) => {
       }}
     >
       {error && <Alert tone="danger">{error}</Alert>}
+      {abiertas.length > 0 && (
+        <Select
+          label="Tarea del tratamiento aprobado (opcional)"
+          value={f.tareaId}
+          onChange={(e) => {
+            const t = abiertas.find((x) => x.id === e.target.value);
+            setF(
+              t
+                ? {
+                    ...f,
+                    tareaId: t.id,
+                    procedimientoId: t.procedimientoId,
+                    diente: t.diente ? String(t.diente) : "",
+                    superficies: t.superficies,
+                  }
+                : { ...f, tareaId: "" },
+            );
+          }}
+        >
+          <option value="">Procedimiento fuera del presupuesto</option>
+          {abiertas.map((t) => (
+            <option key={t.id} value={t.id}>
+              Fase {t.fase} · S{t.sesion} · {t.procedimiento}
+              {t.diente ? ` · ${nombreDiente(t.diente, notacion)}` : ""}
+            </option>
+          ))}
+        </Select>
+      )}
       <div className="grid gap-3 sm:grid-cols-2">
         <Select
           label="Procedimiento"
+          disabled={!!f.tareaId}
           value={f.procedimientoId}
           onChange={(e) => setF({ ...f, procedimientoId: e.target.value })}
         >
@@ -128,6 +162,7 @@ const Procedimientos = ({ paciente }) => {
       {formulario && (
         <Card className="p-4">
           <Formulario
+            pacienteId={paciente.id}
             notacion={notacion}
             alCancelar={() => setFormulario(false)}
             alContinuar={(datos) => setFirma({ tipo: "registrar", datos })}
