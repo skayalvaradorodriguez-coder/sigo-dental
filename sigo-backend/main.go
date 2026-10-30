@@ -55,7 +55,7 @@ func main() {
 
 	// Inyección de dependencias: interfaces en los bordes, implementaciones aquí.
 	repo := repository.NuevoPostgres(pool)
-	redis := cache.NuevaRedisCache(config.ConectarRedis(cfg.RedisAddr, cfg.RedisPass))
+	redis := cache.NuevaRedisCache(config.ConectarRedis(cfg.RedisAddr, cfg.RedisPass, cfg.RedisDB))
 	despachador := &notificaciones.Despachador{Proveedor: &notificaciones.Simulada{}, Clinica: cfg.NombreClinica, Zona: cfg.ZonaHoraria}
 	ctl := controllers.NewControllers(repo, redis, cfg, despachador)
 	app, _ := routes.NuevaApp(ctl)
